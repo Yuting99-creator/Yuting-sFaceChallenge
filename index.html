@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#fff4ec">
+<title>新郎婚禮闖關挑戰</title>
+<style>
+  :root {
+    --ink:#352b2b; --pink:#ef8da5; --deep-pink:#d95d7d; --cream:#fff8f1;
+    --gold:#e8b85c; --green:#46bd78;
+  }
+  * { box-sizing:border-box; }
+  html,body { margin:0; min-height:100%; font-family:system-ui,-apple-system,"Noto Sans TC",sans-serif; color:var(--ink); }
+  body { background:linear-gradient(135deg,#fff4ec,#ffe2e8); }
+  button { font:inherit; cursor:pointer; touch-action:manipulation; }
+  .hidden { display:none!important; }
+  .topbar { position:sticky; top:0; z-index:20; display:flex; justify-content:space-between; align-items:center; gap:12px;
+    padding:10px clamp(12px,3vw,28px); background:#fffdf8ed; border-bottom:1px solid #f2d8d6; box-shadow:0 3px 14px #6b39400d; }
+  .brand { font-weight:900; letter-spacing:.04em; }
+  .stats { display:flex; align-items:center; gap:14px; flex-wrap:nowrap; justify-content:flex-end; }
+  .stat { font-weight:800; white-space:nowrap; }
+  .money-row { display:flex; align-items:center; gap:10px; min-width:0; }
+  .money { color:#a66b19; font-size:clamp(17px,2.5vw,24px); white-space:nowrap; font-weight:1000; }
+  .bill-stack { display:flex; align-items:center; gap:0; width:clamp(100px,34vw,520px); min-width:0; overflow:hidden; height:25px; }
+  .bill { flex:0 0 29px; width:29px; height:19px; margin-left:-7px; border:1px solid #4d9c72; border-radius:3px; background:linear-gradient(135deg,#d7f0d9,#8bc99d);
+    color:#28764c; font-size:8px; font-weight:900; display:grid; place-items:center; box-shadow:1px 1px 0 #4d9c72; }
+  .bill:first-child { margin-left:0; }
+  .pre-game { max-width:760px; margin:7vh auto 0; padding:clamp(24px,5vw,48px); text-align:center; background:#fffaf6d9; border:1px solid #f1d8d8; border-radius:28px; box-shadow:0 15px 40px #9d59601a; }
+  .pre-game .intro-title { font-size:clamp(30px,5vw,48px); font-weight:1000; color:#b94d6b; margin:0 0 16px; }
+  .pre-game .intro-copy { font-size:clamp(17px,2.5vw,22px); line-height:1.9; margin:0 auto 24px; max-width:620px; }
+  .game-layout { display:grid; grid-template-columns:minmax(145px,1fr) minmax(270px,1.35fr) minmax(145px,1fr); gap:14px; align-items:start; }
+  .center-column { min-width:0; }
+  .mouth-panel { margin:12px auto 0; max-width:390px; }
+  .mouth-panel .choices { grid-template-columns:repeat(5,minmax(0,1fr)); }
+  .mouth-panel .piece { min-height:60px; }
+  main { max-width:1180px; margin:auto; padding:20px clamp(12px,3vw,28px) 40px; }
+  h1 { text-align:center; margin:8px 0 5px; font-size:clamp(25px,4vw,38px); }
+  .sub { text-align:center; margin:0 0 18px; color:#806c6b; }
+  .toolbar { display:flex; justify-content:center; align-items:center; gap:12px; flex-wrap:wrap; margin:14px 0 18px; }
+  .btn { border:0; border-radius:999px; padding:12px 24px; color:white; font-weight:900; background:var(--deep-pink);
+    box-shadow:0 5px 0 #b94d6b; }
+  .btn:active { transform:translateY(3px); box-shadow:0 2px 0 #b94d6b; }
+  .btn.secondary { background:#7465a8; box-shadow:0 5px 0 #51467d; }
+  .btn.gold { background:#d69c37; box-shadow:0 5px 0 #a87825; }
+  .btn:disabled { opacity:.5; cursor:not-allowed; }
+  .side { background:#ffffffb8; border:1px solid #f1d8d8; border-radius:18px; padding:12px; }
+  .side h2 { text-align:center; font-size:18px; margin:2px 0 10px; }
+  .choices { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  .piece { min-height:68px; border:2px dashed #e9b7c2; border-radius:12px; background:#fffaf8; display:grid; place-items:center;
+    padding:5px; user-select:none; -webkit-user-select:none; touch-action:none; cursor:grab; }
+  .piece:active { cursor:grabbing; }
+  .piece svg { width:100%; max-width:76px; height:48px; pointer-events:none; }
+  .piece small { font-size:11px; color:#806c6b; pointer-events:none; }
+  .piece.used { opacity:.25; pointer-events:none; }
+  .face-wrap { text-align:center; }
+  .face-board { position:relative; width:min(100%,390px); aspect-ratio: 4 / 5; margin:auto; border-radius:28px; overflow:hidden;
+    background:linear-gradient(180deg,#fffdf7,#f9d9d2); border:3px solid #efc4bc; box-shadow:0 12px 30px #a65e5e22; touch-action:none; }
+  .face-board:before { content:""; position:absolute; width:68%; height:79%; left:16%; top:10%; border-radius:48% 48% 45% 45%;
+    background:#f3c49e; border:3px solid #d69e7f; box-shadow:inset 0 -15px 0 #eab18e; }
+  .hair { position:absolute; z-index:1; left:14%; top:5%; width:72%; height:28%; border-radius:50% 50% 12% 12%;
+    background:#55403a; clip-path:ellipse(50% 50% at 50% 0%); }
+  .ear { position:absolute; z-index:2; top:43%; width:12%; height:19%; border-radius:50%; background:#eeb58f; border:2px solid #d69e7f; }
+  .ear.left { left:11%; } .ear.right { right:11%; }
+  .drop-zone { position:absolute; z-index:4; left:25%; width:50%; height:15%; border:2px dashed #d58a9c; border-radius:14px;
+    display:grid; place-items:center; color:#a45e70; background:#fff8f4aa; font-size:12px; font-weight:800; }
+  #eyeZone { top:34%; } #noseZone { top:51%; left:39%; width:22%; height:16%; } #mouthZone { top:70%; }
+  .placed { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+  .placed svg { width:100%; height:100%; }
+  .face-caption { font-size:13px; color:#8d6c6b; margin:9px 0 0; }
+  .hint { text-align:center; min-height:24px; color:#8b5965; font-weight:700; margin:12px 0; }
+  .progress { width:min(500px,100%); height:9px; border-radius:9px; background:#f4d4d7; overflow:hidden; margin:8px auto; }
+  .progress > div { height:100%; width:0%; background:linear-gradient(90deg,#f3b36c,#e36e91); transition:width .2s; }
+
+  .feedback-popup { position:fixed; inset:0; z-index:80; display:grid; place-items:center; padding:20px;
+    background:#2b18264d; animation:popupFadeIn .16s ease-out; }
+  .feedback-popup-card { width:min(520px,92vw); padding:30px 24px; border:3px solid #f0b8c5; border-radius:24px;
+    background:#fffaf6; color:#a84764; text-align:center; font-size:clamp(22px,4vw,32px); font-weight:1000;
+    box-shadow:0 18px 55px #351b2b40; animation:popupBounce .22s ease-out; }
+  .feedback-popup-card .popup-emoji { display:block; font-size:48px; margin-bottom:8px; }
+  @keyframes popupFadeIn { from { opacity:0; } to { opacity:1; } }
+  @keyframes popupBounce { from { transform:scale(.88); } to { transform:scale(1); } }
+
+  .screen { position:fixed; inset:0; z-index:50; display:grid; place-items:center; padding:22px; background:#100d12; color:white; text-align:center; }
+  .advanced-card { max-width:760px; width:100%; background:#fffaf6; color:#382d30; padding:clamp(22px,5vw,42px); border-radius:26px; }
+  .advanced-card h2 { font-size:clamp(24px,4vw,36px); margin:0 0 16px; }
+  .advanced-card p { line-height:1.9; font-size:clamp(16px,2.4vw,20px); }
+  .mic-screen { background:#050505; color:white; }
+  .mic-screen .love { font-size:clamp(42px,10vw,92px); font-weight:1000; letter-spacing:.08em; margin:15px 0; }
+  .db { font-size:clamp(56px,12vw,110px); font-weight:1000; line-height:1; color:#777; font-variant-numeric:tabular-nums; }
+  .meter { width:min(600px,85vw); height:20px; border:1px solid #777; border-radius:20px; overflow:hidden; margin:25px auto; background:#222; }
+  .meter-fill { height:100%; width:0; background:#555; transition:width .08s linear,background .08s linear; }
+  .mic-note { color:#bbb; line-height:1.7; }
+  .debug { position:fixed; right:10px; bottom:10px; opacity:.025; font-size:10px; padding:7px; }
+  .result { position:fixed; inset:0; z-index:100; display:grid; place-items:center; padding:22px; text-align:center; color:#fff;
+    background:linear-gradient(#26131a66,#26131a88),url("images/wedding-photo.jpg") center/cover no-repeat,linear-gradient(135deg,#c77b8c,#f5c6bd); }
+  .result-panel { background:#fffaf0ed; color:#543b3c; border:3px solid #e8c27d; border-radius:26px; padding:clamp(25px,5vw,52px);
+    width:min(720px,100%); box-shadow:0 15px 50px #0004; }
+  .result h2 { font-size:clamp(28px,5vw,46px); margin:0 0 15px; }
+  .result .amount { color:#b16d18; font-size:clamp(38px,8vw,68px); font-weight:1000; margin:10px 0; }
+  .confetti { font-size:30px; margin-bottom:12px; }
+  .instructions { background:#fffaf6b8; border-radius:14px; padding:10px 14px; font-size:13px; color:#806c6b; margin-top:16px; }
+  @media(max-width:760px) {
+    .game-layout { grid-template-columns:minmax(105px,.8fr) minmax(0,1.5fr); }
+    .center-column { grid-column:1 / -1; grid-row:1; }
+    .side.eyes-side { grid-column:1; grid-row:2; }
+    .side.nose-side { grid-column:2; grid-row:2; }
+    .mouth-panel .choices { grid-template-columns:repeat(5,minmax(0,1fr)); }
+    .topbar { align-items:center; gap:6px; }
+    .brand { font-size:12px; white-space:nowrap; }
+    .stats { gap:7px; font-size:12px; }
+    .bill-stack { width:clamp(65px,23vw,180px); height:21px; }
+    .bill { flex-basis:23px; width:23px; height:15px; font-size:7px; margin-left:-8px; }
+    .money-row { gap:5px; }
+  }
+  @media(max-width:390px) { .game-layout { gap:7px; } .side { padding:8px; } .piece { min-height:59px; } .brand { max-width:90px; overflow:hidden; text-overflow:ellipsis; } .stats { gap:5px; } .money { font-size:15px; } }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">💍 新郎婚禮闖關任務</div>
+  <div class="stats">
+    <div class="stat">⏱ <span id="timer">0</span> 秒</div>
+    <div class="money-row" aria-label="累積紅包金額">
+      <div class="bill-stack" id="billStack" aria-label="新台幣一百元紙鈔"></div>
+      <div class="stat money" id="moneyText">0元</div>
+    </div>
+  </div>
+</header>
+
+<main id="mainGame">
+  <section class="pre-game" id="preGame">
+    <div style="font-size:54px;margin-bottom:8px">💗 💍 💗</div>
+    <h1 class="intro-title">第一關｜愛的模樣</h1>
+    <p class="intro-copy">請在人海中尋找新娘的真實樣貌～<br>耗時幾秒完成，就要給新娘子幾張百元紅包。<br><b>若在 88 秒內未完成，將進入進階挑戰！</b></p>
+    <button class="btn" id="startBtn">挑戰開始</button>
+  </section>
+  <section id="challengeArea" class="hidden">
+    <h1>第一關｜愛的模樣</h1>
+    <p class="sub">在人海中找出新娘的真實樣貌！</p>
+    <div class="toolbar"><span id="gameState" class="stat">挑戰進行中！</span></div>
+    <div class="progress"><div id="progressFill"></div></div>
+    <section class="game-layout">
+      <aside class="side eyes-side">
+        <h2>👀 選擇眼睛</h2>
+        <div class="choices" id="eyesChoices"></div>
+      </aside>
+      <div class="center-column">
+        <div class="face-wrap">
+          <div class="face-board" id="faceBoard" aria-label="新娘臉部五官放置區">
+            <div class="hair"></div><div class="ear left"></div><div class="ear right"></div>
+            <div class="drop-zone" id="eyeZone" data-type="eyes"><span>眼睛放這裡</span><div class="placed"></div></div>
+            <div class="drop-zone" id="noseZone" data-type="nose"><span>鼻子放這裡</span><div class="placed"></div></div>
+            <div class="drop-zone" id="mouthZone" data-type="mouth"><span>嘴巴放這裡</span><div class="placed"></div></div>
+          </div>
+          <p class="face-caption">拖曳五官至臉部對應位置，或先點選五官再點選位置</p>
+        </div>
+        <aside class="side mouth-panel">
+          <h2>👄 選擇嘴巴</h2>
+          <div class="choices" id="mouthChoices"></div>
+        </aside>
+      </div>
+      <aside class="side nose-side">
+        <h2>👃 選擇鼻子</h2>
+        <div class="choices" id="noseChoices"></div>
+      </aside>
+    </section>
+    <div class="hint" id="hint">快來找出新娘的真實模樣！</div>
+    <div class="instructions">圖片替換：臉部底圖預留 <b>images/face-base.png</b>；婚紗照使用 <b>images/wedding-photo.jpg</b>。</div>
+  </section>
+</main>
+
+
+<div class="feedback-popup hidden" id="wrongAnswerPopup" role="alert" aria-live="assertive">
+  <div class="feedback-popup-card">
+    <span class="popup-emoji">😵‍💫</span>
+    噢喔～好像不太對唷～
+  </div>
+</div>
+
+<section class="screen hidden" id="advancedIntro">
+  <div class="advanced-card">
+    <div style="font-size:48px">📣💗</div>
+    <h2>進階挑戰！</h2>
+    <p>哦喔！無法完成五官配對挑戰？請用分貝123的音量大聲向美麗的新娘告白吧！<br><b>（請對著平板用分貝123的音量說出「禹庭我愛你！」）</b></p>
+    <button class="btn gold" id="micStartBtn">進階挑戰開始</button>
+    <p style="font-size:12px;color:#927f7c">請在 HTTPS 或 localhost 網頁環境中使用，並允許麥克風權限。</p>
+  </div>
+</section>
+
+<section class="screen mic-screen hidden" id="micScreen">
+  <div>
+    <div style="font-size:18px;color:#aaa">新郎深情告白挑戰</div>
+    <div class="love">禹庭我愛你！</div>
+    <div class="db" id="dbValue">0</div>
+    <div style="font-size:18px;color:#aaa">遊戲音量指數</div>
+    <div class="meter"><div class="meter-fill" id="meterFill"></div></div>
+    <div class="mic-note" id="micStatus">請大聲說出：禹庭我愛你！</div>
+    <div class="mic-note" id="speechStatus">語音辨識準備中…</div>
+  </div>
+  <button class="debug" id="debugWin" aria-label="測試一鍵通關">測試通關</button>
+</section>
+
+<section class="result hidden" id="resultScreen">
+  <div class="result-panel">
+    <div class="confetti">🎉 💐 🎊</div>
+    <h2>恭喜你挑戰成功！<br>快進門找你的老婆吧～</h2>
+    <div style="font-size:19px">本次紅包金額</div>
+    <div class="amount" id="finalAmount">NT$ 0</div>
+    <div id="resultDetail">新郎闖關成功！</div>
+    <p style="font-size:14px">❤️ 禹庭我愛你！ ❤️</p>
+  </div>
+</section>
+
+<script>
+(() => {
+  "use strict";
+
+  // ====== 主辦人可修改的遊戲設定 ======
+  const CORRECT = { eyes: 7, nose: 3, mouth: 8 }; // 正確答案編號：各類 1～10
+  const MAX_SECONDS = 88;
+  const REWARD_PER_SECOND = 100;
+  const ADVANCED_REWARD = 8800;
+  const SNAP_DISTANCE = 95; // 吸附距離（CSS 像素）
+  const MIC_GAME_THRESHOLD = 96; // 遊戲音量指數門檻，非真實 dB SPL
+  const REQUIRE_SPEECH = true; // 支援語音辨識時，需辨識到告白文字才可通關
+  const LOVE_PHRASE = "禹庭我愛你";
+
+  const $ = id => document.getElementById(id);
+  const timerEl = $("timer"), moneyText = $("moneyText"), billStack = $("billStack");
+  let started = false, finished = false, elapsed = 0, timerId = null;
+  let placed = { eyes:null, nose:null, mouth:null }, selected = null, evaluating = false;
+  let audioContext = null, analyser = null, micStream = null, rafId = null;
+  let speechRecognized = false, speechRecognition = null, currentLevel = 0;
+
+  const faceSvgs = {
+    eyes: [
+      '<path d="M8 28 Q25 5 42 28 Q25 48 8 28 M58 28 Q75 5 92 28 Q75 48 58 28" fill="white" stroke="#49332e" stroke-width="4"/><circle cx="25" cy="28" r="8" fill="#5b91a8"/><circle cx="75" cy="28" r="8" fill="#5b91a8"/>',
+      '<path d="M5 28 Q25 8 45 28 M55 28 Q75 8 95 28" fill="none" stroke="#49332e" stroke-width="6" stroke-linecap="round"/>',
+      '<ellipse cx="27" cy="28" rx="17" ry="10" fill="white" stroke="#49332e" stroke-width="3"/><ellipse cx="73" cy="28" rx="17" ry="10" fill="white" stroke="#49332e" stroke-width="3"/><circle cx="27" cy="28" r="6"/><circle cx="73" cy="28" r="6"/>',
+      '<path d="M7 27 Q25 10 43 27 Q25 39 7 27 M57 27 Q75 10 93 27 Q75 39 57 27" fill="white" stroke="#49332e" stroke-width="3"/><circle cx="25" cy="27" r="5"/><circle cx="75" cy="27" r="5"/>',
+      '<path d="M8 25 Q25 8 42 25 M58 25 Q75 8 92 25" stroke="#49332e" stroke-width="5" fill="none"/><path d="M8 30 Q25 45 42 30 M58 30 Q75 45 92 30" stroke="#49332e" stroke-width="3" fill="none"/>',
+      '<ellipse cx="25" cy="28" rx="18" ry="12" fill="white" stroke="#49332e" stroke-width="3"/><ellipse cx="75" cy="28" rx="18" ry="12" fill="white" stroke="#49332e" stroke-width="3"/><circle cx="25" cy="28" r="7" fill="#4e8b67"/><circle cx="75" cy="28" r="7" fill="#4e8b67"/>',
+      '<path d="M7 29 Q25 4 44 29 Q25 42 7 29 M56 29 Q75 4 94 29 Q75 42 56 29" fill="white" stroke="#30231f" stroke-width="4"/><circle cx="25" cy="27" r="7" fill="#654d3d"/><circle cx="75" cy="27" r="7" fill="#654d3d"/>',
+      '<path d="M5 29 Q25 12 45 29 M55 29 Q75 12 95 29" fill="none" stroke="#30231f" stroke-width="7"/><path d="M13 32 Q25 42 37 32 M63 32 Q75 42 87 32" fill="none" stroke="#30231f" stroke-width="3"/>',
+      '<ellipse cx="25" cy="28" rx="16" ry="9" fill="white" stroke="#49332e" stroke-width="3"/><ellipse cx="75" cy="28" rx="16" ry="9" fill="white" stroke="#49332e" stroke-width="3"/><circle cx="25" cy="28" r="4"/><circle cx="75" cy="28" r="4"/>',
+      '<path d="M7 28 Q25 9 43 28 Q25 48 7 28 M57 28 Q75 9 93 28 Q75 48 57 28" fill="white" stroke="#49332e" stroke-width="3"/><circle cx="25" cy="28" r="8" fill="#4b8b9b"/><circle cx="75" cy="28" r="8" fill="#4b8b9b"/>'
+    ],
+    nose: [
+      '<path d="M50 5 Q44 42 29 54 Q50 68 71 54" fill="none" stroke="#b77760" stroke-width="5" stroke-linecap="round"/>',
+      '<path d="M50 5 L43 49 Q50 60 60 52" fill="none" stroke="#b77760" stroke-width="6" stroke-linecap="round"/>',
+      '<path d="M50 5 Q48 40 29 54 Q50 70 71 54 Q53 48 50 5" fill="#d99679" stroke="#a96855" stroke-width="3"/>',
+      '<path d="M50 5 Q50 45 34 54 Q50 64 66 54" fill="none" stroke="#a96855" stroke-width="7" stroke-linecap="round"/>',
+      '<path d="M50 4 L50 52 M50 52 Q31 65 25 54 M50 52 Q69 65 75 54" fill="none" stroke="#b77760" stroke-width="4"/>',
+      '<path d="M50 5 Q46 42 30 52 Q50 68 70 52" fill="none" stroke="#c17c65" stroke-width="9" stroke-linecap="round"/>',
+      '<path d="M50 5 Q52 42 38 54 Q50 62 62 54" fill="none" stroke="#a96855" stroke-width="4"/>',
+      '<path d="M50 5 Q50 44 27 55 Q50 72 73 55" fill="none" stroke="#b77760" stroke-width="3"/><circle cx="33" cy="56" r="3" fill="#a96855"/><circle cx="67" cy="56" r="3" fill="#a96855"/>',
+      '<path d="M50 5 L45 50 Q50 59 55 50" fill="none" stroke="#b77760" stroke-width="4"/>',
+      '<path d="M50 5 Q47 40 28 54 Q50 66 72 54" fill="none" stroke="#c17c65" stroke-width="5" stroke-linecap="round"/>'
+    ],
+    mouth: [
+      '<path d="M15 25 Q50 55 85 25 Q50 70 15 25" fill="#a8324d" stroke="#743044" stroke-width="3"/>',
+      '<path d="M15 35 Q50 10 85 35" fill="none" stroke="#8e3d46" stroke-width="6" stroke-linecap="round"/>',
+      '<path d="M15 25 Q50 45 85 25 Q50 78 15 25" fill="#b84458" stroke="#743044" stroke-width="3"/><path d="M26 34 Q50 45 74 34" stroke="white" stroke-width="5"/>',
+      '<path d="M15 35 Q50 65 85 35" fill="none" stroke="#8e3d46" stroke-width="7" stroke-linecap="round"/>',
+      '<ellipse cx="50" cy="39" rx="34" ry="19" fill="#9c344d"/><path d="M20 38 Q50 50 80 38" stroke="white" stroke-width="5"/>',
+      '<path d="M15 30 Q50 50 85 30" fill="none" stroke="#a8324d" stroke-width="5"/><path d="M15 38 Q50 68 85 38" fill="none" stroke="#a8324d" stroke-width="5"/>',
+      '<path d="M15 30 Q50 12 85 30 Q50 64 15 30" fill="#c75b6c" stroke="#743044" stroke-width="3"/>',
+      '<path d="M12 32 Q50 52 88 32 Q50 82 12 32" fill="#a8324d" stroke="#743044" stroke-width="3"/><path d="M22 37 Q50 49 78 37" stroke="white" stroke-width="5"/>',
+      '<path d="M15 35 Q50 58 85 35" fill="none" stroke="#9b3e50" stroke-width="8" stroke-linecap="round"/>',
+      '<path d="M15 30 Q50 50 85 30 Q50 68 15 30" fill="#b84458" stroke="#743044" stroke-width="3"/>'
+    ]
+  };
+
+  function svgFor(type, n) {
+    return `<svg viewBox="0 0 100 75" xmlns="http://www.w3.org/2000/svg">${faceSvgs[type][n-1]}</svg>`;
+  }
+  function createChoices(type, containerId, label) {
+    const el = $(containerId);
+    for (let i=1;i<=10;i++) {
+      const item = document.createElement("div");
+      item.className = "piece"; item.dataset.type=type; item.dataset.number=i;
+      item.innerHTML = `${svgFor(type,i)}<small>${label} ${i}</small>`;
+      item.addEventListener("pointerdown", onPieceDown);
+      item.addEventListener("click", () => {
+        if (!started || finished) return;
+        selected = {type, number:i};
+        $("hint").textContent = `已選擇${label}${i}，請點擊臉部對應位置。`;
+      });
+      el.appendChild(item);
+    }
+  }
+  createChoices("eyes","eyesChoices","眼睛");
+  createChoices("nose","noseChoices","鼻子");
+  createChoices("mouth","mouthChoices","嘴巴");
+
+  function renderMoney() {
+    const amount = elapsed * REWARD_PER_SECOND;
+    timerEl.textContent = elapsed;
+    moneyText.textContent = amount.toLocaleString("zh-TW")+"元";
+    billStack.innerHTML = "";
+    // 紙鈔沿橫軸由左至右逐張累積；最多顯示 20 張示意鈔票，金額仍依秒數完整計算
+    for(let i=0;i<Math.min(elapsed,20);i++){
+      const bill=document.createElement("div"); bill.className="bill"; bill.textContent="100";
+      billStack.appendChild(bill);
+    }
+    $("progressFill").style.width = (Object.values(placed).filter(Boolean).length/3*100)+"%";
+  }
+  function startGame() {
+    if(started) return;
+    started=true;
+    $("preGame").classList.add("hidden");
+    $("challengeArea").classList.remove("hidden");
+    $("gameState").textContent="挑戰進行中！";
+    $("hint").textContent="快來找出新娘的真實模樣！";
+    timerId=setInterval(()=>{
+      if(finished) return;
+      elapsed=Math.min(elapsed+1,MAX_SECONDS); renderMoney();
+      if(elapsed>=MAX_SECONDS) enterAdvanced();
+    },1000);
+  }
+  $("startBtn").addEventListener("click",startGame);
+
+  function onPieceDown(e) {
+    if(!started || finished) return;
+    const piece=e.currentTarget;
+    piece.setPointerCapture?.(e.pointerId);
+    const clone=piece.cloneNode(true);
+    clone.style.cssText="position:fixed;z-index:80;pointer-events:none;width:86px;opacity:.9;transform:translate(-50%,-50%);";
+    document.body.appendChild(clone);
+    const move=ev=>{clone.style.left=ev.clientX+"px";clone.style.top=ev.clientY+"px";};
+    move(e);
+    const up=ev=>{
+      document.removeEventListener("pointermove",move);
+      document.removeEventListener("pointerup",up);
+      clone.remove();
+      attemptDrop(piece.dataset.type,Number(piece.dataset.number),ev.clientX,ev.clientY);
+    };
+    document.addEventListener("pointermove",move,{passive:true});
+    document.addEventListener("pointerup",up,{once:true});
+  }
+  function attemptDrop(type, number, x, y) {
+    if(!started || finished || evaluating || placed[type]!==null) return;
+    const zone=$(type==="eyes"?"eyeZone":type==="nose"?"noseZone":"mouthZone");
+    const r=zone.getBoundingClientRect(), cx=r.left+r.width/2, cy=r.top+r.height/2;
+    const distance=Math.hypot(x-cx,y-cy);
+    if(distance>SNAP_DISTANCE) { $("hint").textContent="再靠近一點，對準對應位置就會自動吸附！"; return; }
+    // 不論編號是否正確，只要拖到該類五官的目標區，就會先吸附上去。
+    placeFeature(type,number);
+  }
+  function placeFeature(type,number) {
+    if(placed[type]!==null || evaluating) return;
+    placed[type]=number; selected=null;
+    const zone=$(type==="eyes"?"eyeZone":type==="nose"?"noseZone":"mouthZone");
+    zone.querySelector("span").classList.add("hidden");
+    zone.querySelector(".placed").innerHTML=svgFor(type,number);
+    document.querySelectorAll(`.piece[data-type="${type}"][data-number="${number}"]`).forEach(el=>el.classList.add("used"));
+    $("progressFill").style.width=(Object.values(placed).filter(v=>v!==null).length/3*100)+"%";
+    const count=Object.values(placed).filter(v=>v!==null).length;
+    if(count===3) evaluateFace();
+    else $("hint").textContent=`已完成 ${count}/3 個位置，繼續尋找新娘的模樣！`;
+  }
+  function evaluateFace() {
+    const allCorrect=Object.keys(CORRECT).every(type=>placed[type]===CORRECT[type]);
+    if(allCorrect) {
+      $("hint").textContent="挑戰成功！你找到新娘的真實模樣了！";
+      setTimeout(()=>win(elapsed*REWARD_PER_SECOND,"愛的模樣｜五官配對挑戰成功！"),450);
+      return;
+    }
+    evaluating=true;
+    // 錯誤答案時顯示置中的彈出視窗，短暫提示後自動關閉並清空配對。
+    $("wrongAnswerPopup").classList.remove("hidden");
+    $("hint").textContent="請重新配對三個五官。";
+    setTimeout(()=>{
+      $("wrongAnswerPopup").classList.add("hidden");
+      if(finished) return;
+      ["eyeZone","noseZone","mouthZone"].forEach(id=>{
+        const zone=$(id); zone.querySelector("span").classList.remove("hidden"); zone.querySelector(".placed").innerHTML="";
+      });
+      document.querySelectorAll(".piece.used").forEach(el=>el.classList.remove("used"));
+      placed={eyes:null,nose:null,mouth:null}; evaluating=false;
+      $("progressFill").style.width="0%";
+      $("hint").textContent="再試一次！三個位置都放好後，才會揭曉結果。";
+    },1500);
+  }
+  ["eyeZone","noseZone","mouthZone"].forEach(id=>{
+    $(id).addEventListener("click",()=>{
+      if(!selected || !started || finished) return;
+      const expected=selected.type==="eyes"?"eyeZone":selected.type==="nose"?"noseZone":"mouthZone";
+      if(id===expected) {
+        const zone=$(id).getBoundingClientRect();
+        attemptDrop(selected.type,selected.number,zone.left+zone.width/2,zone.top+zone.height/2);
+      }
+    });
+  });
+
+  function stopTimer(){ if(timerId){clearInterval(timerId);timerId=null;} }
+  function enterAdvanced() {
+    if(finished) return;
+    stopTimer(); finished=true;
+    $("mainGame").classList.add("hidden");
+    $("advancedIntro").classList.remove("hidden");
+    $("gameState").textContent="進階挑戰";
+  }
+  function win(amount,detail) {
+    if($("resultScreen").classList.contains("hidden")===false) return;
+    finished=true; stopTimer(); stopMic();
+    $("finalAmount").textContent="NT$ "+Number(amount).toLocaleString("zh-TW");
+    $("resultDetail").textContent=detail;
+    $("advancedIntro").classList.add("hidden");
+    $("micScreen").classList.add("hidden");
+    $("resultScreen").classList.remove("hidden");
+  }
+
+  async function startMicChallenge() {
+    $("micStartBtn").disabled=true;
+    $("micStartBtn").textContent="正在取得麥克風權限…";
+    try {
+      if(!navigator.mediaDevices?.getUserMedia) throw new Error("此瀏覽器不支援麥克風，請使用 HTTPS 網頁及較新的瀏覽器。");
+      micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+      audioContext=new (window.AudioContext||window.webkitAudioContext)();
+      await audioContext.resume();
+      analyser=audioContext.createAnalyser(); analyser.fftSize=2048;
+      const source=audioContext.createMediaStreamSource(micStream); source.connect(analyser);
+      $("advancedIntro").classList.add("hidden"); $("micScreen").classList.remove("hidden");
+      $("micStatus").textContent="麥克風已啟動，請大聲告白！";
+      startSpeechRecognition();
+      updateMicLevel();
+    } catch(err) {
+      $("micStartBtn").disabled=false; $("micStartBtn").textContent="重新取得麥克風權限";
+      $("micStartBtn").insertAdjacentHTML("afterend",`<p style="color:#b44">${escapeHtml(err.message||"無法啟用麥克風")}</p>`);
+    }
+  }
+  $("micStartBtn").addEventListener("click",startMicChallenge);
+
+  function startSpeechRecognition() {
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(!SR) {
+      $("speechStatus").textContent="此瀏覽器沒有語音辨識功能：現場可用隱藏測試按鈕測試流程。";
+      speechRecognized=!REQUIRE_SPEECH; return;
+    }
+    speechRecognition=new SR();
+    speechRecognition.lang="zh-TW"; speechRecognition.continuous=true; speechRecognition.interimResults=true;
+    speechRecognition.onresult=e=>{
+      let transcript="";
+      for(let i=e.resultIndex;i<e.results.length;i++) transcript+=e.results[i][0].transcript;
+      const normalized=transcript.replace(/[，。！？、\s]/g,"");
+      if(normalized.includes(LOVE_PHRASE)) {
+        speechRecognized=true; $("speechStatus").textContent="❤️ 告白辨識成功！再大聲一點！";
+        maybeMicWin();
+      } else {
+        $("speechStatus").textContent="辨識內容："+(transcript||"聆聽中…");
+      }
+    };
+    speechRecognition.onerror=()=>{ $("speechStatus").textContent="語音辨識暫時不可用，請確認瀏覽器語音服務權限。"; };
+    speechRecognition.onend=()=>{ if(!$("micScreen").classList.contains("hidden")&&!finished){try{speechRecognition.start();}catch(e){}} };
+    try{speechRecognition.start();}catch(e){ $("speechStatus").textContent="語音辨識啟動失敗，請重新整理後再試。"; }
+  }
+
+  function updateMicLevel() {
+    if(!analyser || finished) return;
+    const data=new Uint8Array(analyser.fftSize); analyser.getByteTimeDomainData(data);
+    let sum=0;
+    for(let i=0;i<data.length;i++){ const v=(data[i]-128)/128; sum+=v*v; }
+    const rms=Math.sqrt(sum/data.length);
+    // 將麥克風 RMS 映射為遊戲音量指數 0～123；不是校正過的聲壓分貝。
+    const db=Math.max(0,Math.min(123,Math.round(20*Math.log10(Math.max(rms,0.00001))+100)));
+    currentLevel=db;
+    const shown=Math.min(123,db);
+    const dbEl=$("dbValue"), fill=$("meterFill");
+    dbEl.textContent=shown;
+    let color="#555";
+    if(shown>=110) color=`rgb(255,${Math.round(60-(shown-110)*6)},${Math.round(60-(shown-110)*6)})`;
+    else if(shown>=90) {
+      const t=(shown-90)/20; color=`rgb(${Math.round(255*t)},${Math.round(210-150*t)},30)`;
+    } else if(shown>=80) color="#43d17d";
+    else color="#666";
+    dbEl.style.color=color; fill.style.background=color; fill.style.width=(shown/123*100)+"%";
+    if(shown>=MIC_GAME_THRESHOLD) maybeMicWin();
+    rafId=requestAnimationFrame(updateMicLevel);
+  }
+  function maybeMicWin() {
+    if(currentLevel>=MIC_GAME_THRESHOLD && (!REQUIRE_SPEECH || speechRecognized)) {
+      $("dbValue").style.color="#ff1717"; $("dbValue").style.transform="scale(1.18)";
+      $("micStatus").textContent="告白成功！新郎太有誠意了！";
+      win(ADVANCED_REWARD,"進階告白挑戰成功！");
+    }
+  }
+  function stopMic() {
+    if(rafId) cancelAnimationFrame(rafId);
+    if(speechRecognition){try{speechRecognition.onend=null;speechRecognition.stop();}catch(e){}}
+    if(micStream) micStream.getTracks().forEach(t=>t.stop());
+    if(audioContext){try{audioContext.close();}catch(e){}}
+  }
+  $("debugWin").addEventListener("click",()=>win(ADVANCED_REWARD,"進階挑戰（現場測試通關）"));
+
+  function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+  renderMoney();
+})();
+</script>
+</body>
+</html>
