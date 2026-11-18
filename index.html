@@ -55,7 +55,7 @@
   .piece.used { opacity:.25; pointer-events:none; }
   .face-wrap { text-align:center; }
   .face-board { position:relative; width:min(100%,390px); aspect-ratio: 4 / 5; margin:auto; border-radius:28px; overflow:hidden;
-    background:linear-gradient(180deg,#fffdf7,#f9d9d2); border:3px solid #efc4bc; box-shadow:0 12px 30px #a65e5e22; touch-action:none; }
+    background: url("images/face-base.png") center/cover no-repeat #fffdf7; border:3px solid #efc4bc; box-shadow:0 12px 30px #a65e5e22; touch-action:none; }
   .face-board:before { content:""; position:absolute; width:68%; height:79%; left:16%; top:10%; border-radius:48% 48% 45% 45%;
     background:#f3c49e; border:3px solid #d69e7f; box-shadow:inset 0 -15px 0 #eab18e; }
   .hair { position:absolute; z-index:1; left:14%; top:5%; width:72%; height:28%; border-radius:50% 50% 12% 12%;
@@ -148,7 +148,7 @@
       <div class="center-column">
         <div class="face-wrap">
           <div class="face-board" id="faceBoard" aria-label="新娘臉部五官放置區">
-            <div class="hair"></div><div class="ear left"></div><div class="ear right"></div>
+            <!--<div class="hair"></div><div class="ear left"></div><div class="ear right"></div>-->
             <div class="drop-zone" id="eyeZone" data-type="eyes"><span>眼睛放這裡</span><div class="placed"></div></div>
             <div class="drop-zone" id="noseZone" data-type="nose"><span>鼻子放這裡</span><div class="placed"></div></div>
             <div class="drop-zone" id="mouthZone" data-type="mouth"><span>嘴巴放這裡</span><div class="placed"></div></div>
