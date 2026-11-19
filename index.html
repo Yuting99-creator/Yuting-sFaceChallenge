@@ -456,17 +456,24 @@
   }
   $("micStartBtn").addEventListener("click", startMicChallenge);
 
-  function updateMicLevel() {
+function updateMicLevel() {
     if (!analyser || finished) return;
-    const data = new Uint8Array(analyser.frequencyBinCount);
-    analyser.getByteFrequencyData(data);
+    const data = new Uint8Array(analyser.fftSize);
+    analyser.getByteTimeDomainData(data);
 
-    let sum = 0;
+    let sumSquares = 0;
+    let peak = 0;
     for (let i = 0; i < data.length; i++) {
-      sum += data[i];
+      const centered = (data[i] - 128) / 128; // -1 到 +1 之間
+      const absVal = Math.abs(centered);
+      if (absVal > peak) peak = absVal;
+      sumSquares += centered * centered;
     }
-    const average = sum / data.length;
-    const db = Math.min(123, Math.round((average / 128) * 123));
+
+    const rms = Math.sqrt(sumSquares / data.length);
+    // 結合 RMS 與峰值，讓一般說話約 40~75、大聲喊叫約 85~123
+    const combined = Math.max(rms * 2.4, peak * 1.15);
+    const db = Math.max(0, Math.min(123, Math.round(combined * 123)));
 
     currentLevel = db;
     const dbEl = $("dbValue");
