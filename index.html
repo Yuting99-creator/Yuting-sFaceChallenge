@@ -59,11 +59,11 @@
   .drop-zone { position:absolute; z-index:4; border:2px dashed transparent; border-radius:8px;
     display:grid; place-items:center; color:transparent; background:transparent; font-size:11px; font-weight:800; }
   
-  /* 根據 face-base.jpg 調整後的位置與大小 */
-  #eyeZone { top: 31%; left: 20%; width: 60%; height: 8.5%; z-index: 4; }
-  #noseZone { top: 35.5%; left: 37%; width: 26%; height: 11%; z-index: 5; }
-  #noseZone .placed { transform: scale(1.2); transform-origin: center; }
-  #mouthZone { top: 45.5%; left: 26%; width: 48%; height: 9.5%; z-index: 6; }
+/* 根據 Face.jpg 整張畫面比例重新對齊五官位置 */
+#eyeZone { top: 33.5%; left: 25%; width: 50%; height: 6.5%; z-index: 4; }
+#noseZone { top: 36.5%; left: 40%; width: 20%; height: 8.5%; z-index: 5; }
+#noseZone .placed { transform: scale(1.08); transform-origin: center; }
+#mouthZone { top: 46.5%; left: 34%; width: 32%; height: 7.5%; z-index: 6; }
 
   .placed { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
   .placed svg, .placed img { width:100%; height:100%; object-fit:contain; display:block; }
