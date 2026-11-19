@@ -58,9 +58,11 @@
     background:url("images/face-base.png") center/100% 100% no-repeat; border:3px solid #efc4bc; box-shadow:0 12px 30px #a65e5e22; touch-action:none; }
   .drop-zone { position:absolute; z-index:4; border:2px dashed transparent; border-radius:8px;
     display:grid; place-items:center; color:transparent; background:transparent; font-size:11px; font-weight:800; }
-  #eyeZone { top:29%; left:24%; width:52%; height:7.5%; }
-  #noseZone { top:29.5%; left:38%; width:24%; height:14.5%; z-index:5; }
-  #mouthZone { top:44%; left:31%; width:38%; height:7.5%; }
+ /* 根據 face-base.jpg 五官遮罩區域精準調整定位與大小 */
+#eyeZone {top: 31%; left: 20%; width: 60%;  height: 9%; z-index: 4;}
+#noseZone {top: 32%; left: 36%; width: 28%; height: 14%; z-index: 5;}
+#noseZone .placed { transform:scale(1.2); transform-origin:center; }
+#mouthZone {top: 44%; left: 26%; width: 48%; height: 10%; z-index: 6;}
   .placed { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
   .placed svg, .placed img { width:100%; height:100%; object-fit:contain; display:block; }
   .face-caption { font-size:13px; color:#8d6c6b; margin:9px 0 0; }
@@ -374,73 +376,73 @@
     $("resultScreen").classList.remove("hidden");
   }
 
-  async function startMicChallenge() {
-    $("micStartBtn").disabled=true;
-    $("micStartBtn").textContent="正在取得麥克風權限…";
+async function startMicChallenge() {
+    const btn = $("micStartBtn");
+    btn.disabled = true;
+    btn.textContent = "正在取得麥克風權限…";
     try {
-      if(!navigator.mediaDevices?.getUserMedia) throw new Error("此瀏覽器不支援麥克風，請使用 HTTPS 網頁及較新的瀏覽器。");
-      micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
-      audioContext=new (window.AudioContext||window.webkitAudioContext)();
-      await audioContext.resume();
-      analyser=audioContext.createAnalyser(); analyser.fftSize=2048;
-      const source=audioContext.createMediaStreamSource(micStream); source.connect(analyser);
-      $("advancedIntro").classList.add("hidden"); $("micScreen").classList.remove("hidden");
-      $("micStatus").textContent="麥克風已啟動，請大聲告白！";
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error("此瀏覽器不支援麥克風，請使用 HTTPS 網頁及較新的瀏覽器。");
+      }
+      micStream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+      });
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      audioContext = new AudioCtx();
+      if (audioContext.state === "suspended") {
+        await audioContext.resume();
+      }
+      analyser = audioContext.createAnalyser();
+      analyser.fftSize = 1024;
+      const source = audioContext.createMediaStreamSource(micStream);
+      source.connect(analyser);
+
+      $("advancedIntro").classList.add("hidden");
+      $("micScreen").classList.remove("hidden");
+      $("micStatus").textContent = "麥克風已啟動，請大聲告白！";
       startSpeechRecognition();
       updateMicLevel();
-    } catch(err) {
-      $("micStartBtn").disabled=false; $("micStartBtn").textContent="重新取得麥克風權限";
-      $("micStartBtn").insertAdjacentHTML("afterend",`<p style="color:#b44">${escapeHtml(err.message||"無法啟用麥克風")}</p>`);
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = "重新取得麥克風權限";
+      btn.insertAdjacentHTML("afterend", `<p style="color:#b44">${escapeHtml(err.message || "無法啟用麥克風")}</p>`);
     }
-  }
-  $("micStartBtn").addEventListener("click",startMicChallenge);
-
-  function startSpeechRecognition() {
-    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-    if(!SR) {
-      $("speechStatus").textContent="此瀏覽器沒有語音辨識功能：現場可用隱藏測試按鈕測試流程。";
-      speechRecognized=!REQUIRE_SPEECH; return;
-    }
-    speechRecognition=new SR();
-    speechRecognition.lang="zh-TW"; speechRecognition.continuous=true; speechRecognition.interimResults=true;
-    speechRecognition.onresult=e=>{
-      let transcript="";
-      for(let i=e.resultIndex;i<e.results.length;i++) transcript+=e.results[i][0].transcript;
-      const normalized=transcript.replace(/[，。！？、\s]/g,"");
-      if(normalized.includes(LOVE_PHRASE)) {
-        speechRecognized=true; $("speechStatus").textContent="❤️ 告白辨識成功！再大聲一點！";
-        maybeMicWin();
-      } else {
-        $("speechStatus").textContent="辨識內容："+(transcript||"聆聽中…");
-      }
-    };
-    speechRecognition.onerror=()=>{ $("speechStatus").textContent="語音辨識暫時不可用，請確認瀏覽器語音服務權限。"; };
-    speechRecognition.onend=()=>{ if(!$("micScreen").classList.contains("hidden")&&!finished){try{speechRecognition.start();}catch(e){}} };
-    try{speechRecognition.start();}catch(e){ $("speechStatus").textContent="語音辨識啟動失敗，請重新整理後再試。"; }
   }
 
   function updateMicLevel() {
-    if(!analyser || finished) return;
-    const data=new Uint8Array(analyser.fftSize); analyser.getByteTimeDomainData(data);
-    let sum=0;
-    for(let i=0;i<data.length;i++){ const v=(data[i]-128)/128; sum+=v*v; }
-    const rms=Math.sqrt(sum/data.length);
-    // 將麥克風 RMS 映射為遊戲音量指數 0～123；不是校正過的聲壓分貝。
-    const db=Math.max(0,Math.min(123,Math.round(20*Math.log10(Math.max(rms,0.00001))+100)));
-    currentLevel=db;
-    const shown=Math.min(123,db);
-    const dbEl=$("dbValue"), fill=$("meterFill");
-    dbEl.textContent=shown;
-    let color="#555";
-    if(shown>=110) color=`rgb(255,${Math.round(60-(shown-110)*6)},${Math.round(60-(shown-110)*6)})`;
-    else if(shown>=90) {
-      const t=(shown-90)/20; color=`rgb(${Math.round(255*t)},${Math.round(210-150*t)},30)`;
-    } else if(shown>=80) color="#43d17d";
-    else color="#666";
-    dbEl.style.color=color; fill.style.background=color; fill.style.width=(shown/123*100)+"%";
-    if(shown>=MIC_GAME_THRESHOLD) maybeMicWin();
-    rafId=requestAnimationFrame(updateMicLevel);
+    if (!analyser || finished) return;
+    const data = new Uint8Array(analyser.frequencyBinCount);
+    analyser.getByteFrequencyData(data);
+
+    let sum = 0;
+    for (let i = 0; i < data.length; i++) {
+      sum += data[i];
+    }
+    const average = sum / data.length;
+    const db = Math.min(123, Math.round((average / 128) * 123));
+
+    currentLevel = db;
+    const dbEl = $("dbValue");
+    const fill = $("meterFill");
+    if (dbEl && fill) {
+      dbEl.textContent = db;
+      fill.style.width = (db / 123 * 100) + "%";
+
+      let color = "#666";
+      if (db >= 100) color = "#e74c3c";
+      else if (db >= 80) color = "#f39c12";
+      else if (db >= 40) color = "#2ecc71";
+
+      dbEl.style.color = color;
+      fill.style.background = color;
+    }
+
+    if (db >= MIC_GAME_THRESHOLD) {
+      maybeMicWin();
+    }
+    rafId = requestAnimationFrame(updateMicLevel);
   }
+  
   function maybeMicWin() {
     if(currentLevel>=MIC_GAME_THRESHOLD && (!REQUIRE_SPEECH || speechRecognized)) {
       $("dbValue").style.color="#ff1717"; $("dbValue").style.transform="scale(1.18)";
