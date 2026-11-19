@@ -296,7 +296,6 @@ function runTimer() {
     if(elapsed>=MAX_SECONDS) enterAdvanced();
   },1000);
 }
-  }
   $("startBtn").addEventListener("click",startGame);
 // 按下「繼續挑戰」後，清空錯誤配對並恢復計時
 $("continueGameBtn").addEventListener("click",()=>{
@@ -426,21 +425,6 @@ function evaluateFace() {
   $("wrongAnswerPopup").classList.remove("hidden");
   $("hint").textContent="請重新配對三個五官。";
 }
-    evaluating=true;
-    $("wrongAnswerPopup").classList.remove("hidden");
-    $("hint").textContent="請重新配對三個五官。";
-    setTimeout(()=>{
-      $("wrongAnswerPopup").classList.add("hidden");
-      if(finished) return;
-      ["eyeZone","noseZone","mouthZone"].forEach(id=>{
-        const zone=$(id); zone.querySelector("span").classList.remove("hidden"); zone.querySelector(".placed").innerHTML="";
-      });
-      document.querySelectorAll(".piece.used").forEach(el=>el.classList.remove("used"));
-      placed={eyes:null,nose:null,mouth:null}; evaluating=false;
-      $("progressFill").style.width="0%";
-      $("hint").textContent="再試一次！三個位置都放好後，才會揭曉結果。";
-    },1500);
-  }
 
   ["eyeZone","noseZone","mouthZone"].forEach(id=>{
     $(id).addEventListener("click",()=>{
