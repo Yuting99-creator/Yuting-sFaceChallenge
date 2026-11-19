@@ -58,11 +58,13 @@
     background:url("images/face-base.png") center/100% 100% no-repeat; border:3px solid #efc4bc; box-shadow:0 12px 30px #a65e5e22; touch-action:none; }
   .drop-zone { position:absolute; z-index:4; border:2px dashed transparent; border-radius:8px;
     display:grid; place-items:center; color:transparent; background:transparent; font-size:11px; font-weight:800; }
- /* 根據 face-base.jpg 五官遮罩區域精準調整定位與大小 */
-#eyeZone {top: 31%; left: 20%; width: 60%;  height: 9%; z-index: 4;}
-#noseZone {top: 32%; left: 36%; width: 28%; height: 14%; z-index: 5;}
-#noseZone .placed { transform:scale(1.2); transform-origin:center; }
-#mouthZone {top: 44%; left: 26%; width: 48%; height: 10%; z-index: 6;}
+  
+  /* 根據 face-base.jpg 調整後的位置與大小 */
+  #eyeZone { top: 31%; left: 20%; width: 60%; height: 8.5%; z-index: 4; }
+  #noseZone { top: 35.5%; left: 37%; width: 26%; height: 11%; z-index: 5; }
+  #noseZone .placed { transform: scale(1.2); transform-origin: center; }
+  #mouthZone { top: 45.5%; left: 26%; width: 48%; height: 9.5%; z-index: 6; }
+
   .placed { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
   .placed svg, .placed img { width:100%; height:100%; object-fit:contain; display:block; }
   .face-caption { font-size:13px; color:#8d6c6b; margin:9px 0 0; }
@@ -146,7 +148,6 @@
       <div class="center-column">
         <div class="face-wrap">
           <div class="face-board" id="faceBoard" aria-label="新娘臉部五官放置區">
-            <!--<div class="hair"></div><div class="ear left"></div><div class="ear right"></div>-->
             <div class="drop-zone" id="eyeZone" data-type="eyes"><span>眼睛放這裡</span><div class="placed"></div></div>
             <div class="drop-zone" id="noseZone" data-type="nose"><span>鼻子放這裡</span><div class="placed"></div></div>
             <div class="drop-zone" id="mouthZone" data-type="mouth"><span>嘴巴放這裡</span><div class="placed"></div></div>
@@ -167,7 +168,6 @@
     <div class="instructions">圖片替換：臉部底圖預留 <b>images/face-base.png</b>；婚紗照使用 <b>images/wedding-photo.jpg</b>。</div>
   </section>
 </main>
-
 
 <div class="feedback-popup hidden" id="wrongAnswerPopup" role="alert" aria-live="assertive">
   <div class="feedback-popup-card">
@@ -232,8 +232,6 @@
   let speechRecognized = false, speechRecognition = null, currentLevel = 0;
 
   function svgFor(type, n) {
-    // 根據你上傳的資料夾與命名規則讀取圖片
-    // type 會帶入 eyes, nose, mouth；n 會帶入對應的編號數字
     return `<img src="images/${type}${n}.png" alt="${type} ${n}" style="width:100%; height:100%; object-fit:contain; pointer-events:none;" />`;
   }
 
@@ -253,7 +251,6 @@
     }
   }
 
-  // 依照你的實際數量呼叫：眼睛10個、鼻子8個、嘴巴8個
   createChoices("eyes","eyesChoices","眼睛", 10);
   createChoices("nose","noseChoices","鼻子", 8);
   createChoices("mouth","mouthChoices","嘴巴", 8);
@@ -263,13 +260,13 @@
     timerEl.textContent = elapsed;
     moneyText.textContent = amount.toLocaleString("zh-TW")+"元";
     billStack.innerHTML = "";
-    // 紙鈔沿橫軸由左至右逐張累積；最多顯示 20 張示意鈔票，金額仍依秒數完整計算
     for(let i=0;i<Math.min(elapsed,20);i++){
       const bill=document.createElement("div"); bill.className="bill"; bill.textContent="100";
       billStack.appendChild(bill);
     }
     $("progressFill").style.width = (Object.values(placed).filter(Boolean).length/3*100)+"%";
   }
+
   function startGame() {
     if(started) return;
     started=true;
@@ -303,15 +300,16 @@
     document.addEventListener("pointermove",move,{passive:true});
     document.addEventListener("pointerup",up,{once:true});
   }
+
   function attemptDrop(type, number, x, y) {
     if(!started || finished || evaluating || placed[type]!==null) return;
     const zone=$(type==="eyes"?"eyeZone":type==="nose"?"noseZone":"mouthZone");
     const r=zone.getBoundingClientRect(), cx=r.left+r.width/2, cy=r.top+r.height/2;
     const distance=Math.hypot(x-cx,y-cy);
     if(distance>SNAP_DISTANCE) { $("hint").textContent="再靠近一點，對準對應位置就會自動吸附！"; return; }
-    // 不論編號是否正確，只要拖到該類五官的目標區，就會先吸附上去。
     placeFeature(type,number);
   }
+
   function placeFeature(type,number) {
     if(placed[type]!==null || evaluating) return;
     placed[type]=number; selected=null;
@@ -324,6 +322,7 @@
     if(count===3) evaluateFace();
     else $("hint").textContent=`已完成 ${count}/3 個位置，繼續尋找新娘的模樣！`;
   }
+
   function evaluateFace() {
     const allCorrect=Object.keys(CORRECT).every(type=>placed[type]===CORRECT[type]);
     if(allCorrect) {
@@ -332,7 +331,6 @@
       return;
     }
     evaluating=true;
-    // 錯誤答案時顯示置中的彈出視窗，短暫提示後自動關閉並清空配對。
     $("wrongAnswerPopup").classList.remove("hidden");
     $("hint").textContent="請重新配對三個五官。";
     setTimeout(()=>{
@@ -347,6 +345,7 @@
       $("hint").textContent="再試一次！三個位置都放好後，才會揭曉結果。";
     },1500);
   }
+
   ["eyeZone","noseZone","mouthZone"].forEach(id=>{
     $(id).addEventListener("click",()=>{
       if(!selected || !started || finished) return;
@@ -359,6 +358,7 @@
   });
 
   function stopTimer(){ if(timerId){clearInterval(timerId);timerId=null;} }
+
   function enterAdvanced() {
     if(finished) return;
     stopTimer(); finished=true;
@@ -366,6 +366,7 @@
     $("advancedIntro").classList.remove("hidden");
     $("gameState").textContent="進階挑戰";
   }
+
   function win(amount,detail) {
     if($("resultScreen").classList.contains("hidden")===false) return;
     finished=true; stopTimer(); stopMic();
@@ -376,7 +377,7 @@
     $("resultScreen").classList.remove("hidden");
   }
 
-async function startMicChallenge() {
+  async function startMicChallenge() {
     const btn = $("micStartBtn");
     btn.disabled = true;
     btn.textContent = "正在取得麥克風權限…";
@@ -406,6 +407,47 @@ async function startMicChallenge() {
       btn.disabled = false;
       btn.textContent = "重新取得麥克風權限";
       btn.insertAdjacentHTML("afterend", `<p style="color:#b44">${escapeHtml(err.message || "無法啟用麥克風")}</p>`);
+    }
+  }
+  $("micStartBtn").addEventListener("click", startMicChallenge);
+
+  function startSpeechRecognition() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      $("speechStatus").textContent = "此瀏覽器沒有語音辨識功能：現場可用隱藏測試按鈕測試流程。";
+      speechRecognized = !REQUIRE_SPEECH;
+      return;
+    }
+    speechRecognition = new SR();
+    speechRecognition.lang = "zh-TW";
+    speechRecognition.continuous = true;
+    speechRecognition.interimResults = true;
+    speechRecognition.onresult = e => {
+      let transcript = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        transcript += e.results[i][0].transcript;
+      }
+      const normalized = transcript.replace(/[，。！？、\s]/g, "");
+      if (normalized.includes(LOVE_PHRASE)) {
+        speechRecognized = true;
+        $("speechStatus").textContent = "❤️ 告白辨識成功！再大聲一點！";
+        maybeMicWin();
+      } else {
+        $("speechStatus").textContent = "辨識內容：" + (transcript || "聆聽中…");
+      }
+    };
+    speechRecognition.onerror = () => {
+      $("speechStatus").textContent = "語音辨識暫時不可用，請確認瀏覽器語音服務權限。";
+    };
+    speechRecognition.onend = () => {
+      if (!$("micScreen").classList.contains("hidden") && !finished) {
+        try { speechRecognition.start(); } catch (e) {}
+      }
+    };
+    try {
+      speechRecognition.start();
+    } catch (e) {
+      $("speechStatus").textContent = "語音辨識啟動失敗，請重新整理後再試。";
     }
   }
 
@@ -450,12 +492,14 @@ async function startMicChallenge() {
       win(ADVANCED_REWARD,"進階告白挑戰成功！");
     }
   }
+
   function stopMic() {
     if(rafId) cancelAnimationFrame(rafId);
     if(speechRecognition){try{speechRecognition.onend=null;speechRecognition.stop();}catch(e){}}
     if(micStream) micStream.getTracks().forEach(t=>t.stop());
     if(audioContext){try{audioContext.close();}catch(e){}}
   }
+
   $("debugWin").addEventListener("click",()=>win(ADVANCED_REWARD,"進階挑戰（現場測試通關）"));
 
   function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
