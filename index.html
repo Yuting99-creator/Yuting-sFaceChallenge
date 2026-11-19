@@ -66,7 +66,7 @@
     background:url("images/face-base.png") center/100% 100% no-repeat; border:3px solid #efc4bc; box-shadow:0 12px 30px #a65e5e22; touch-action:none; }
   .drop-zone { position:absolute; z-index:4; border:2px dashed transparent; border-radius:8px;
     display:grid; place-items:center; color:transparent; background:transparent; font-size:11px; font-weight:800; }
-  
+
 /* 根據 Face.jpg 整張畫面比例重新對齊五官位置 */
 #eyeZone { top: 33.5%; left: 32.4%; width: 35.3%; height: 5.2%; }
 #eyeZone .placed { transform: scale(1.28); transform-origin: center; }
@@ -189,7 +189,7 @@
   <div class="advanced-card">
     <div style="font-size:48px">📣💗</div>
     <h2>進階挑戰！</h2>
-    <p>哦喔！無法完成五官配對挑戰？請用分貝123的音量大聲向美麗的新娘告白吧！<br><b>（請對著平板用分貝123的音量說出「禹庭我愛你！」）</b></p>
+    <p>哦喔！無法完成五官配對挑戰？請用最大聲的音量向美麗的新娘告白吧！<br><b>（請對著裝置大聲說出「禹庭我愛你！」讓音量指數達標！）</b></p>
     <button class="btn gold" id="micStartBtn">進階挑戰開始</button>
     <p style="font-size:12px;color:#927f7c">請在 HTTPS 或 localhost 網頁環境中使用，並允許麥克風權限。</p>
   </div>
@@ -203,7 +203,6 @@
     <div style="font-size:18px;color:#aaa">遊戲音量指數</div>
     <div class="meter"><div class="meter-fill" id="meterFill"></div></div>
     <div class="mic-note" id="micStatus">請大聲說出：禹庭我愛你！</div>
-    <div class="mic-note" id="speechStatus">語音辨識準備中…</div>
   </div>
   <button class="debug" id="debugWin" aria-label="測試一鍵通關">測試通關</button>
 </section>
@@ -230,15 +229,14 @@
   const ADVANCED_REWARD = 8800;
   const SNAP_DISTANCE = 95; // 吸附距離（CSS 像素）
   const MIC_GAME_THRESHOLD = 96; // 遊戲音量指數門檻，非真實 dB SPL
-  const REQUIRE_SPEECH = true; // 支援語音辨識時，需辨識到告白文字才可通關
-  const LOVE_PHRASE = "禹庭我愛你";
+  const REQUIRE_SPEECH = false; // 只需要音量感應達標即可通關，不需語音辨識
 
   const $ = id => document.getElementById(id);
   const timerEl = $("timer"), moneyText = $("moneyText"), billStack = $("billStack");
   let started = false, finished = false, elapsed = 0, timerId = null;
   let placed = { eyes:null, nose:null, mouth:null }, selected = null, evaluating = false;
   let audioContext = null, analyser = null, micStream = null, rafId = null;
-  let speechRecognized = false, speechRecognition = null, currentLevel = 0;
+  let currentLevel = 0;
 
   function svgFor(type, n) {
     return `<img src="images/${type}${n}.png" alt="${type} ${n}" style="width:100%; height:100%; object-fit:contain; pointer-events:none;" />`;
@@ -263,7 +261,7 @@
   createChoices("eyes","eyesChoices","眼睛", 10);
   createChoices("nose","noseChoices","鼻子", 8);
   createChoices("mouth","mouthChoices","嘴巴", 8);
-  
+
   function renderMoney() {
     const amount = elapsed * REWARD_PER_SECOND;
     timerEl.textContent = elapsed;
@@ -283,50 +281,39 @@
     $("challengeArea").classList.remove("hidden");
     $("gameState").textContent="挑戰進行中！";
     $("hint").textContent="快來找出新娘的真實模樣！";
-    
-  runTimer();
-}
+    runTimer();
+  }
 
-function runTimer() {
-  if(timerId || finished) return;
-
-  timerId=setInterval(()=>{
-    if(finished) return;
-
-    elapsed=Math.min(elapsed+1,MAX_SECONDS);
-    renderMoney();
-
-    if(elapsed>=MAX_SECONDS) enterAdvanced();
-  },1000);
-}
+  function runTimer() {
+    if(timerId || finished) return;
+    timerId=setInterval(()=>{
+      if(finished) return;
+      elapsed=Math.min(elapsed+1,MAX_SECONDS);
+      renderMoney();
+      if(elapsed>=MAX_SECONDS) enterAdvanced();
+    },1000);
+  }
   $("startBtn").addEventListener("click",startGame);
-// 按下「繼續挑戰」後，清空錯誤配對並恢復計時
-$("continueGameBtn").addEventListener("click",()=>{
-  $("wrongAnswerPopup").classList.add("hidden");
 
-  // 清空三個五官位置
-  ["eyeZone","noseZone","mouthZone"].forEach(id=>{
-    const zone=$(id);
-    zone.querySelector("span").classList.remove("hidden");
-    zone.querySelector(".placed").innerHTML="";
+  // 按下「繼續挑戰」後，清空錯誤配對並恢復計時
+  $("continueGameBtn").addEventListener("click",()=>{
+    $("wrongAnswerPopup").classList.add("hidden");
+    ["eyeZone","noseZone","mouthZone"].forEach(id=>{
+      const zone=$(id);
+      zone.querySelector("span").classList.remove("hidden");
+      zone.querySelector(".placed").innerHTML="";
+    });
+    document.querySelectorAll(".piece.used").forEach(el=>{
+      el.classList.remove("used");
+    });
+    placed={eyes:null,nose:null,mouth:null};
+    selected=null;
+    evaluating=false;
+    $("progressFill").style.width="0%";
+    $("hint").textContent="再試一次！三個位置都放好後，才會揭曉結果。";
+    runTimer();
   });
 
-  // 恢復所有五官素材
-  document.querySelectorAll(".piece.used").forEach(el=>{
-    el.classList.remove("used");
-  });
-
-  placed={eyes:null,nose:null,mouth:null};
-  selected=null;
-  evaluating=false;
-
-  $("progressFill").style.width="0%";
-  $("hint").textContent="再試一次！三個位置都放好後，才會揭曉結果。";
-
-  // 從暫停的秒數繼續計時
-  runTimer();
-});
-  
   function onPieceDown(e) {
     if(!started || finished) return;
     const piece=e.currentTarget;
@@ -346,88 +333,64 @@ $("continueGameBtn").addEventListener("click",()=>{
     document.addEventListener("pointerup",up,{once:true});
   }
 
-function attemptDrop(type, number, x, y) {
-  if(!started || finished || evaluating) return;
-
-  const zone=$(type==="eyes"?"eyeZone":type==="nose"?"noseZone":"mouthZone");
-  const r=zone.getBoundingClientRect();
-  const cx=r.left+r.width/2;
-  const cy=r.top+r.height/2;
-  const distance=Math.hypot(x-cx,y-cy);
-
-  if(distance>SNAP_DISTANCE) {
-    $("hint").textContent="再靠近一點，對準對應位置就會自動吸附！";
-    return;
+  function attemptDrop(type, number, x, y) {
+    if(!started || finished || evaluating) return;
+    const zone=$(type==="eyes"?"eyeZone":type==="nose"?"noseZone":"mouthZone");
+    const r=zone.getBoundingClientRect();
+    const cx=r.left+r.width/2;
+    const cy=r.top+r.height/2;
+    const distance=Math.hypot(x-cx,y-cy);
+    if(distance>SNAP_DISTANCE) {
+      $("hint").textContent="再靠近一點，對準對應位置就會自動吸附！";
+      return;
+    }
+    placeFeature(type,number);
   }
 
-  placeFeature(type,number);
-}
-
-function placeFeature(type,number) {
-  if(evaluating) return;
-
-  const zone=$(type==="eyes"?"eyeZone":type==="nose"?"noseZone":"mouthZone");
-
-  // 取得原本放置的五官編號
-  const previousNumber = placed[type];
-
-  // 如果放入的是相同素材，就不需要重新操作
-  if(previousNumber === number) return;
-
-  // ① 如果原本有素材，先解除舊素材的使用狀態
-  if(previousNumber !== null) {
+  function placeFeature(type,number) {
+    if(evaluating) return;
+    const zone=$(type==="eyes"?"eyeZone":type==="nose"?"noseZone":"mouthZone");
+    const previousNumber = placed[type];
+    if(previousNumber === number) return;
+    if(previousNumber !== null) {
+      document.querySelectorAll(
+        `.piece[data-type="${type}"][data-number="${previousNumber}"]`
+      ).forEach(el=>el.classList.remove("used"));
+    }
+    placed[type] = number;
+    selected = null;
+    zone.querySelector("span").classList.add("hidden");
+    zone.querySelector(".placed").innerHTML = svgFor(type,number);
     document.querySelectorAll(
-      `.piece[data-type="${type}"][data-number="${previousNumber}"]`
-    ).forEach(el=>el.classList.remove("used"));
+      `.piece[data-type="${type}"][data-number="${number}"]`
+    ).forEach(el=>el.classList.add("used"));
+    const count = Object.values(placed).filter(v=>v!==null).length;
+    $("progressFill").style.width = (count/3*100)+"%";
+    if(count===3) {
+      evaluateFace();
+    } else {
+      $("hint").textContent =
+        `已完成 ${count}/3 個位置，繼續尋找新娘的模樣！`;
+    }
   }
 
-  // ② 更新目前放置的五官編號
-  placed[type] = number;
-  selected = null;
-
-  // ③ 顯示新的五官素材
-  zone.querySelector("span").classList.add("hidden");
-  zone.querySelector(".placed").innerHTML = svgFor(type,number);
-
-  // ④ 將新素材標記為已使用
-  document.querySelectorAll(
-    `.piece[data-type="${type}"][data-number="${number}"]`
-  ).forEach(el=>el.classList.add("used"));
-
-  // ⑤ 更新遊戲進度
-  const count = Object.values(placed).filter(v=>v!==null).length;
-
-  $("progressFill").style.width = (count/3*100)+"%";
-
-  // ⑥ 判斷是否完成三個五官
-  if(count===3) {
-    evaluateFace();
-  } else {
-    $("hint").textContent =
-      `已完成 ${count}/3 個位置，繼續尋找新娘的模樣！`;
-  }
-}
-function evaluateFace() {
-  const allCorrect=Object.keys(CORRECT).every(
-    type=>placed[type]===CORRECT[type]
-  );
-
-  if(allCorrect) {
-    $("hint").textContent="挑戰成功！你找到新娘的真實模樣了！";
-    setTimeout(
-      ()=>win(elapsed*REWARD_PER_SECOND,"愛的模樣｜五官配對挑戰成功！"),
-      450
+  function evaluateFace() {
+    const allCorrect=Object.keys(CORRECT).every(
+      type=>placed[type]===CORRECT[type]
     );
-    return;
+    if(allCorrect) {
+      $("hint").textContent="挑戰成功！你找到新娘的真實模樣了！";
+      setTimeout(
+        ()=>win(elapsed*REWARD_PER_SECOND,"愛的模樣｜五官配對挑戰成功！"),
+        450
+      );
+      return;
+    }
+    evaluating=true;
+    stopTimer();
+    $("wrongAnswerPopup").classList.remove("hidden");
+    $("hint").textContent="請重新配對三個五官。";
   }
-
-  // 答案錯誤：暫停計時
-  evaluating=true;
-  stopTimer();
-
-  $("wrongAnswerPopup").classList.remove("hidden");
-  $("hint").textContent="請重新配對三個五官。";
-}
 
   ["eyeZone","noseZone","mouthZone"].forEach(id=>{
     $(id).addEventListener("click",()=>{
@@ -484,7 +447,6 @@ function evaluateFace() {
       $("advancedIntro").classList.add("hidden");
       $("micScreen").classList.remove("hidden");
       $("micStatus").textContent = "麥克風已啟動，請大聲告白！";
-      startSpeechRecognition();
       updateMicLevel();
     } catch (err) {
       btn.disabled = false;
@@ -493,46 +455,6 @@ function evaluateFace() {
     }
   }
   $("micStartBtn").addEventListener("click", startMicChallenge);
-
-  function startSpeechRecognition() {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) {
-      $("speechStatus").textContent = "此瀏覽器沒有語音辨識功能：現場可用隱藏測試按鈕測試流程。";
-      speechRecognized = !REQUIRE_SPEECH;
-      return;
-    }
-    speechRecognition = new SR();
-    speechRecognition.lang = "zh-TW";
-    speechRecognition.continuous = true;
-    speechRecognition.interimResults = true;
-    speechRecognition.onresult = e => {
-      let transcript = "";
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        transcript += e.results[i][0].transcript;
-      }
-      const normalized = transcript.replace(/[，。！？、\s]/g, "");
-      if (normalized.includes(LOVE_PHRASE)) {
-        speechRecognized = true;
-        $("speechStatus").textContent = "❤️ 告白辨識成功！再大聲一點！";
-        maybeMicWin();
-      } else {
-        $("speechStatus").textContent = "辨識內容：" + (transcript || "聆聽中…");
-      }
-    };
-    speechRecognition.onerror = () => {
-      $("speechStatus").textContent = "語音辨識暫時不可用，請確認瀏覽器語音服務權限。";
-    };
-    speechRecognition.onend = () => {
-      if (!$("micScreen").classList.contains("hidden") && !finished) {
-        try { speechRecognition.start(); } catch (e) {}
-      }
-    };
-    try {
-      speechRecognition.start();
-    } catch (e) {
-      $("speechStatus").textContent = "語音辨識啟動失敗，請重新整理後再試。";
-    }
-  }
 
   function updateMicLevel() {
     if (!analyser || finished) return;
@@ -567,9 +489,9 @@ function evaluateFace() {
     }
     rafId = requestAnimationFrame(updateMicLevel);
   }
-  
+
   function maybeMicWin() {
-    if(currentLevel>=MIC_GAME_THRESHOLD && (!REQUIRE_SPEECH || speechRecognized)) {
+    if(currentLevel>=MIC_GAME_THRESHOLD && !REQUIRE_SPEECH) {
       $("dbValue").style.color="#ff1717"; $("dbValue").style.transform="scale(1.18)";
       $("micStatus").textContent="告白成功！新郎太有誠意了！";
       win(ADVANCED_REWARD,"進階告白挑戰成功！");
@@ -578,7 +500,6 @@ function evaluateFace() {
 
   function stopMic() {
     if(rafId) cancelAnimationFrame(rafId);
-    if(speechRecognition){try{speechRecognition.onend=null;speechRecognition.stop();}catch(e){}}
     if(micStream) micStream.getTracks().forEach(t=>t.stop());
     if(audioContext){try{audioContext.close();}catch(e){}}
   }
