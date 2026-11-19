@@ -171,77 +171,6 @@
   </section>
 </main>
 
-<!-- 🎯 【暫時調校工具】調好位置後整段刪除即可 -->
-<div id="tunerBox" style="position:fixed;left:10px;bottom:10px;z-index:999;background:#fffaf6ee;border:2px solid #d95d7d;border-radius:14px;padding:10px 12px;font-size:12px;box-shadow:0 8px 24px #0003;max-width:290px;">
-  <div style="font-weight:900;margin-bottom:6px;">🎯 五官位置即時微調器</div>
-  <select id="tunerTarget" style="width:100%;margin-bottom:6px;padding:4px;">
-    <option value="eyeZone">眼睛 (#eyeZone)</option>
-    <option value="noseZone">鼻子 (#noseZone)</option>
-    <option value="mouthZone">嘴巴 (#mouthZone)</option>
-  </select>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
-    <label>top% <input id="tTop" type="number" step="0.5" style="width:65px;"></label>
-    <label>left% <input id="tLeft" type="number" step="0.5" style="width:65px;"></label>
-    <label>width% <input id="tWidth" type="number" step="0.5" style="width:65px;"></label>
-    <label>height% <input id="tHeight" type="number" step="0.5" style="width:65px;"></label>
-    <label style="grid-column:1/-1;">放大 scale <input id="tScale" type="number" step="0.05" style="width:70px;"></label>
-  </div>
-  <textarea id="tOut" rows="4" style="width:100%;margin-top:6px;font-size:11px;" readonly></textarea>
-</div>
-<script>
-(() => {
-  const scales = { eyeZone: 1.28, noseZone: 1.18, mouthZone: 1 };
-  const sel = document.getElementById("tunerTarget");
-  const inputs = {
-    top: document.getElementById("tTop"),
-    left: document.getElementById("tLeft"),
-    width: document.getElementById("tWidth"),
-    height: document.getElementById("tHeight"),
-    scale: document.getElementById("tScale")
-  };
-  const out = document.getElementById("tOut");
-
-  document.querySelectorAll(".drop-zone").forEach(z => {
-    z.style.border = "1.5px dashed rgba(217,93,125,0.85)";
-    z.style.background = "rgba(255,255,255,0.15)";
-  });
-
-  function loadTarget() {
-    const el = document.getElementById(sel.value);
-    const r = el.getBoundingClientRect();
-    const p = el.parentElement.getBoundingClientRect();
-    inputs.top.value = ((r.top - p.top) / p.height * 100).toFixed(1);
-    inputs.left.value = ((r.left - p.left) / p.width * 100).toFixed(1);
-    inputs.width.value = (r.width / p.width * 100).toFixed(1);
-    inputs.height.value = (r.height / p.height * 100).toFixed(1);
-    inputs.scale.value = scales[sel.value] ?? 1;
-    updateCode();
-  }
-
-  function updateCode() {
-    const id = sel.value;
-    const el = document.getElementById(id);
-    const placed = el.querySelector(".placed");
-    const sc = Number(inputs.scale.value || 1);
-    scales[id] = sc;
-    el.style.top = inputs.top.value + "%";
-    el.style.left = inputs.left.value + "%";
-    el.style.width = inputs.width.value + "%";
-    el.style.height = inputs.height.value + "%";
-    if (placed) {
-      placed.style.transform = `scale(${sc})`;
-      placed.style.transformOrigin = "center";
-    }
-    out.value = `#${id} { top: ${inputs.top.value}%; left: ${inputs.left.value}%; width: ${inputs.width.value}%; height: ${inputs.height.value}%; }\n#${id} .placed { transform: scale(${sc}); transform-origin: center; }`;
-  }
-
-  sel.addEventListener("change", loadTarget);
-  Object.values(inputs).forEach(inp => inp.addEventListener("input", updateCode));
-  setTimeout(loadTarget, 300);
-})();
-</script>
-<!-- 🎯 【調校工具結束】 -->
-
 <div class="feedback-popup hidden" id="wrongAnswerPopup" role="alert" aria-live="assertive">
   <div class="feedback-popup-card">
     <span class="popup-emoji">😵‍💫</span>
@@ -374,28 +303,67 @@
     document.addEventListener("pointerup",up,{once:true});
   }
 
-  function attemptDrop(type, number, x, y) {
-    if(!started || finished || evaluating || placed[type]!==null) return;
-    const zone=$(type==="eyes"?"eyeZone":type==="nose"?"noseZone":"mouthZone");
-    const r=zone.getBoundingClientRect(), cx=r.left+r.width/2, cy=r.top+r.height/2;
-    const distance=Math.hypot(x-cx,y-cy);
-    if(distance>SNAP_DISTANCE) { $("hint").textContent="再靠近一點，對準對應位置就會自動吸附！"; return; }
-    placeFeature(type,number);
+function attemptDrop(type, number, x, y) {
+  if(!started || finished || evaluating) return;
+
+  const zone=$(type==="eyes"?"eyeZone":type==="nose"?"noseZone":"mouthZone");
+  const r=zone.getBoundingClientRect();
+  const cx=r.left+r.width/2;
+  const cy=r.top+r.height/2;
+  const distance=Math.hypot(x-cx,y-cy);
+
+  if(distance>SNAP_DISTANCE) {
+    $("hint").textContent="再靠近一點，對準對應位置就會自動吸附！";
+    return;
   }
 
-  function placeFeature(type,number) {
-    if(placed[type]!==null || evaluating) return;
-    placed[type]=number; selected=null;
-    const zone=$(type==="eyes"?"eyeZone":type==="nose"?"noseZone":"mouthZone");
-    zone.querySelector("span").classList.add("hidden");
-    zone.querySelector(".placed").innerHTML=svgFor(type,number);
-    document.querySelectorAll(`.piece[data-type="${type}"][data-number="${number}"]`).forEach(el=>el.classList.add("used"));
-    $("progressFill").style.width=(Object.values(placed).filter(v=>v!==null).length/3*100)+"%";
-    const count=Object.values(placed).filter(v=>v!==null).length;
-    if(count===3) evaluateFace();
-    else $("hint").textContent=`已完成 ${count}/3 個位置，繼續尋找新娘的模樣！`;
+  placeFeature(type,number);
+}
+
+function placeFeature(type,number) {
+  if(evaluating) return;
+
+  const zone=$(type==="eyes"?"eyeZone":type==="nose"?"noseZone":"mouthZone");
+
+  // 取得原本放置的五官編號
+  const previousNumber = placed[type];
+
+  // 如果放入的是相同素材，就不需要重新操作
+  if(previousNumber === number) return;
+
+  // ① 如果原本有素材，先解除舊素材的使用狀態
+  if(previousNumber !== null) {
+    document.querySelectorAll(
+      `.piece[data-type="${type}"][data-number="${previousNumber}"]`
+    ).forEach(el=>el.classList.remove("used"));
   }
 
+  // ② 更新目前放置的五官編號
+  placed[type] = number;
+  selected = null;
+
+  // ③ 顯示新的五官素材
+  zone.querySelector("span").classList.add("hidden");
+  zone.querySelector(".placed").innerHTML = svgFor(type,number);
+
+  // ④ 將新素材標記為已使用
+  document.querySelectorAll(
+    `.piece[data-type="${type}"][data-number="${number}"]`
+  ).forEach(el=>el.classList.add("used"));
+
+  // ⑤ 更新遊戲進度
+  const count = Object.values(placed).filter(v=>v!==null).length;
+
+  $("progressFill").style.width = (count/3*100)+"%";
+
+  // ⑥ 判斷是否完成三個五官
+  if(count===3) {
+    evaluateFace();
+  } else {
+    $("hint").textContent =
+      `已完成 ${count}/3 個位置，繼續尋找新娘的模樣！`;
+  }
+}
   function evaluateFace() {
     const allCorrect=Object.keys(CORRECT).every(type=>placed[type]===CORRECT[type]);
     if(allCorrect) {
