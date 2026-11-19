@@ -172,10 +172,14 @@
 </main>
 
 <div class="feedback-popup hidden" id="wrongAnswerPopup" role="alert" aria-live="assertive">
-  <div class="feedback-popup-card">
-    <span class="popup-emoji">😵‍💫</span>
-    噢喔～好像不太對唷～
+<div class="feedback-popup-card">
+  <span class="popup-emoji">😵‍💫</span>
+  噢喔～好像不太對唷～
+  <div style="margin-top:24px;">
+    <button class="btn" id="continueGameBtn">繼續挑戰</button>
   </div>
+</div>
+
 </div>
 
 <section class="screen hidden" id="advancedIntro">
@@ -276,14 +280,51 @@
     $("challengeArea").classList.remove("hidden");
     $("gameState").textContent="挑戰進行中！";
     $("hint").textContent="快來找出新娘的真實模樣！";
-    timerId=setInterval(()=>{
-      if(finished) return;
-      elapsed=Math.min(elapsed+1,MAX_SECONDS); renderMoney();
-      if(elapsed>=MAX_SECONDS) enterAdvanced();
-    },1000);
+    
+  runTimer();
+}
+
+function runTimer() {
+  if(timerId || finished) return;
+
+  timerId=setInterval(()=>{
+    if(finished) return;
+
+    elapsed=Math.min(elapsed+1,MAX_SECONDS);
+    renderMoney();
+
+    if(elapsed>=MAX_SECONDS) enterAdvanced();
+  },1000);
+}
   }
   $("startBtn").addEventListener("click",startGame);
+// 按下「繼續挑戰」後，清空錯誤配對並恢復計時
+$("continueGameBtn").addEventListener("click",()=>{
+  $("wrongAnswerPopup").classList.add("hidden");
 
+  // 清空三個五官位置
+  ["eyeZone","noseZone","mouthZone"].forEach(id=>{
+    const zone=$(id);
+    zone.querySelector("span").classList.remove("hidden");
+    zone.querySelector(".placed").innerHTML="";
+  });
+
+  // 恢復所有五官素材
+  document.querySelectorAll(".piece.used").forEach(el=>{
+    el.classList.remove("used");
+  });
+
+  placed={eyes:null,nose:null,mouth:null};
+  selected=null;
+  evaluating=false;
+
+  $("progressFill").style.width="0%";
+  $("hint").textContent="再試一次！三個位置都放好後，才會揭曉結果。";
+
+  // 從暫停的秒數繼續計時
+  runTimer();
+});
+  
   function onPieceDown(e) {
     if(!started || finished) return;
     const piece=e.currentTarget;
@@ -364,13 +405,27 @@ function placeFeature(type,number) {
       `已完成 ${count}/3 個位置，繼續尋找新娘的模樣！`;
   }
 }
-  function evaluateFace() {
-    const allCorrect=Object.keys(CORRECT).every(type=>placed[type]===CORRECT[type]);
-    if(allCorrect) {
-      $("hint").textContent="挑戰成功！你找到新娘的真實模樣了！";
-      setTimeout(()=>win(elapsed*REWARD_PER_SECOND,"愛的模樣｜五官配對挑戰成功！"),450);
-      return;
-    }
+function evaluateFace() {
+  const allCorrect=Object.keys(CORRECT).every(
+    type=>placed[type]===CORRECT[type]
+  );
+
+  if(allCorrect) {
+    $("hint").textContent="挑戰成功！你找到新娘的真實模樣了！";
+    setTimeout(
+      ()=>win(elapsed*REWARD_PER_SECOND,"愛的模樣｜五官配對挑戰成功！"),
+      450
+    );
+    return;
+  }
+
+  // 答案錯誤：暫停計時
+  evaluating=true;
+  stopTimer();
+
+  $("wrongAnswerPopup").classList.remove("hidden");
+  $("hint").textContent="請重新配對三個五官。";
+}
     evaluating=true;
     $("wrongAnswerPopup").classList.remove("hidden");
     $("hint").textContent="請重新配對三個五官。";
