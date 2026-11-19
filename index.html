@@ -423,70 +423,91 @@
     $("resultScreen").classList.remove("hidden");
   }
 
-  async function startMicChallenge() {
+async function startMicChallenge() {
     const btn = $("micStartBtn");
+    const introCard = btn.parentElement;
     btn.disabled = true;
-    btn.textContent = "正在取得麥克風權限…";
+    btn.textContent = "正在啟動麥克風…";
+
+    // 清掉舊的錯誤提示
+    introCard.querySelectorAll(".mic-err-msg").forEach(el => el.remove());
+
     try {
-      if (!navigator.mediaDevices?.getUserMedia) {
-        throw new Error("此瀏覽器不支援麥克風，請使用 HTTPS 網頁及較新的瀏覽器。");
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error("此環境不支援 getUserMedia（請確認是否為 HTTPS 或 localhost）");
       }
+
       micStream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+        audio: true
       });
+
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      audioContext = new AudioCtx();
+      if (!AudioCtx) {
+        throw new Error("此瀏覽器不支援 AudioContext");
+      }
+
+      if (!audioContext) {
+        audioContext = new AudioCtx();
+      }
       if (audioContext.state === "suspended") {
         await audioContext.resume();
       }
+
       analyser = audioContext.createAnalyser();
       analyser.fftSize = 1024;
+      analyser.smoothingTimeConstant = 0.5;
+
       const source = audioContext.createMediaStreamSource(micStream);
       source.connect(analyser);
 
+      finished = false;
       $("advancedIntro").classList.add("hidden");
       $("micScreen").classList.remove("hidden");
-      $("micStatus").textContent = "麥克風已啟動，請大聲告白！";
+      $("micStatus").textContent = `麥克風已啟動（狀態：${audioContext.state}），請大聲說出：禹庭我愛你！`;
+
+      if (rafId) cancelAnimationFrame(rafId);
       updateMicLevel();
     } catch (err) {
       btn.disabled = false;
       btn.textContent = "重新取得麥克風權限";
-      btn.insertAdjacentHTML("afterend", `<p style="color:#b44">${escapeHtml(err.message || "無法啟用麥克風")}</p>`);
+      const msg = document.createElement("p");
+      msg.className = "mic-err-msg";
+      msg.style.cssText = "color:#c0392b;font-weight:700;margin-top:10px;";
+      msg.textContent = "啟動失敗：" + (err && err.message ? err.message : String(err));
+      introCard.appendChild(msg);
     }
   }
-  $("micStartBtn").addEventListener("click", startMicChallenge);
 
-function updateMicLevel() {
+  function updateMicLevel() {
     if (!analyser || finished) return;
+
     const data = new Uint8Array(analyser.fftSize);
     analyser.getByteTimeDomainData(data);
 
     let sumSquares = 0;
     let peak = 0;
     for (let i = 0; i < data.length; i++) {
-      const centered = (data[i] - 128) / 128; // -1 到 +1 之間
+      const centered = (data[i] - 128) / 128;
       const absVal = Math.abs(centered);
       if (absVal > peak) peak = absVal;
       sumSquares += centered * centered;
     }
 
     const rms = Math.sqrt(sumSquares / data.length);
-    // 結合 RMS 與峰值，讓一般說話約 40~75、大聲喊叫約 85~123
-    const combined = Math.max(rms * 2.4, peak * 1.15);
+    const combined = Math.max(rms * 2.5, peak * 1.2);
     const db = Math.max(0, Math.min(123, Math.round(combined * 123)));
 
     currentLevel = db;
     const dbEl = $("dbValue");
     const fill = $("meterFill");
-    if (dbEl && fill) {
-      dbEl.textContent = db;
-      fill.style.width = (db / 123 * 100) + "%";
+    if (dbEl) dbEl.textContent = db;
+    if (fill) fill.style.width = (db / 123 * 100) + "%";
 
+    if (dbEl && fill) {
       let color = "#666";
       if (db >= 100) color = "#e74c3c";
       else if (db >= 80) color = "#f39c12";
       else if (db >= 40) color = "#2ecc71";
-
       dbEl.style.color = color;
       fill.style.background = color;
     }
@@ -494,6 +515,7 @@ function updateMicLevel() {
     if (db >= MIC_GAME_THRESHOLD) {
       maybeMicWin();
     }
+
     rafId = requestAnimationFrame(updateMicLevel);
   }
 
