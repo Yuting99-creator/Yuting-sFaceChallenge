@@ -26,14 +26,13 @@
   .bill { flex:0 0 29px; width:29px; height:19px; margin-left:-7px; border:1px solid #4d9c72; border-radius:3px; background:linear-gradient(135deg,#d7f0d9,#8bc99d);
     color:#28764c; font-size:8px; font-weight:900; display:grid; place-items:center; box-shadow:1px 1px 0 #4d9c72; }
   .bill:first-child { margin-left:0; }
-  .pre-game { -width:760px; margin:7vh auto 0; padding:clamp(24px,5vw,48px); text-align:center; background:#fffaf6d9; border:1px solid #f1d8d8; border-radius:28px; box-shadow:0 15px 40px #9d59601a; }
+  .pre-game { max-width:760px; margin:7vh auto 0; padding:clamp(24px,5vw,48px); text-align:center; background:#fffaf6d9; border:1px solid #f1d8d8; border-radius:28px; box-shadow:0 15px 40px #9d59601a; }
   .pre-game .intro-title { font-size:clamp(30px,5vw,48px); font-weight:1000; color:#b94d6b; margin:0 0 16px; }
-  .pre-game .intro-copy { font-size:clamp(17px,2.5vw,22px); line-height:1.9; margin:0 auto 24px; -width:620px; }
+  .pre-game .intro-copy { font-size:clamp(17px,2.5vw,22px); line-height:1.9; margin:0 auto 24px; max-width:620px; }
   .game-layout { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,2.3fr) minmax(0,1fr); gap:clamp(6px,1.5vw,16px); align-items:start; max-width:960px; margin:0 auto; }
   .center-column { min-width:0; }
   .mouth-panel { margin:12px auto 0; max-width:390px; }
   .mouth-panel .choices { grid-template-columns:repeat(4,minmax(0,1fr)); }
-  /* 左右素材庫：單欄固定 */
   .eyes-side .choices, .nose-side .choices { grid-template-columns:minmax(0,1fr); }
   .eyes-side, .nose-side { padding:clamp(5px,1vw,12px); }
   main { max-width:1180px; margin:auto; padding:20px clamp(12px,3vw,28px) 40px; }
@@ -47,19 +46,16 @@
   .btn.gold { background:#d69c37; box-shadow:0 5px 0 #a87825; }
   .btn:disabled { opacity:.5; cursor:not-allowed; }
   .side { background:#ffffffb8; border:1px solid #f1d8d8; border-radius:18px; padding:12px; }
-  .side h2 { text-align:center; font-size:18px; margin:2px 0 10px; }
+  .side h2 { text-align:center; font-size:clamp(12px,2.6vw,18px); margin:2px 0 10px; }
   .choices { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
-  .piece { min-height:68px; border:2px dashed #e9b7c2; border-radius:12px; background:#fffaf8; display:grid; place-items:center;
+  .piece { min-height:0; gap:2px; overflow:hidden; border:2px dashed #e9b7c2; border-radius:12px; background:#fffaf8; display:grid; place-items:center;
     padding:5px; user-select:none; -webkit-user-select:none; touch-action:none; cursor:grab; }
   .piece:active { cursor:grabbing; }
-  .piece { min-height:0; gap:2px; overflow:hidden; }
   .piece img { display:block; width:100%; height:auto; max-height:56px; object-fit:contain; pointer-events:none; }
   .eyes-side .piece img { max-height:40px; }
   .nose-side .piece img { max-height:52px; }
   .mouth-panel .piece img { max-height:34px; }
-  .side h2 { font-size:clamp(12px,2.6vw,18px); }
-  .piece small { font-size:clamp(9px,2vw,11px); }
-  .piece small { font-size:11px; color:#806c6b; pointer-events:none; }
+  .piece small { font-size:clamp(9px,2vw,11px); color:#806c6b; pointer-events:none; }
   .piece.used { opacity:.25; pointer-events:none; }
   .face-wrap { text-align:center; }
   .face-board { position:relative; width:min(100%,390px); aspect-ratio: 7 / 11; margin:auto; border-radius:28px; overflow:hidden;
@@ -67,13 +63,12 @@
   .drop-zone { position:absolute; z-index:4; border:2px dashed transparent; border-radius:8px;
     display:grid; place-items:center; color:transparent; background:transparent; font-size:11px; font-weight:800; }
 
-/* 根據 Face.jpg 整張畫面比例重新對齊五官位置 */
-#eyeZone { top: 33.5%; left: 32.4%; width: 35.3%; height: 5.2%; }
-#eyeZone .placed { transform: scale(1.28); transform-origin: center; }
-#noseZone { top: 32.2%; left: 33.8%; width: 32.4%; height: 12%; }
-#noseZone .placed { transform: scale(1.15); transform-origin: center; }
-#mouthZone { top: 44%; left: 36.5%; width: 27.5%; height: 8%; }
-#mouthZone .placed { transform: scale(1.15); transform-origin: center; }
+  #eyeZone { top: 33.5%; left: 32.4%; width: 35.3%; height: 5.2%; }
+  #eyeZone .placed { transform: scale(1.28); transform-origin: center; }
+  #noseZone { top: 32.2%; left: 33.8%; width: 32.4%; height: 12%; }
+  #noseZone .placed { transform: scale(1.15); transform-origin: center; }
+  #mouthZone { top: 44%; left: 36.5%; width: 27.5%; height: 8%; }
+  #mouthZone .placed { transform: scale(1.15); transform-origin: center; }
 
   .placed { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
   .placed svg, .placed img { width:100%; height:100%; object-fit:contain; display:block; }
@@ -169,20 +164,19 @@
         <div class="choices" id="noseChoices"></div>
       </aside>
     </section>
-<div class="hint" id="hint">快來找出新娘的真實模樣！</div>
+    <div class="hint" id="hint">快來找出新娘的真實模樣！</div>
     <div class="instructions">圖片替換：臉部底圖預留 <b>images/face-base.png</b>；婚紗照使用 <b>images/wedding-photo.jpg</b>。</div>
   </section>
 </main>
 
 <div class="feedback-popup hidden" id="wrongAnswerPopup" role="alert" aria-live="assertive">
-<div class="feedback-popup-card">
-  <span class="popup-emoji">😵‍💫</span>
-  噢喔～好像不太對唷～
-  <div style="margin-top:24px;">
-    <button class="btn" id="continueGameBtn">繼續挑戰</button>
+  <div class="feedback-popup-card">
+    <span class="popup-emoji">😵‍💫</span>
+    噢喔～好像不太對唷～
+    <div style="margin-top:24px;">
+      <button class="btn" id="continueGameBtn">繼續挑戰</button>
+    </div>
   </div>
-</div>
-
 </div>
 
 <section class="screen hidden" id="advancedIntro">
@@ -222,14 +216,13 @@
 (() => {
   "use strict";
 
-  // ====== 主辦人可修改的遊戲設定 ======
-  const CORRECT = { eyes: 7, nose: 3, mouth: 8 }; // 正確答案編號：各類 1～10
+  const CORRECT = { eyes: 7, nose: 3, mouth: 8 };
   const MAX_SECONDS = 88;
   const REWARD_PER_SECOND = 100;
   const ADVANCED_REWARD = 8800;
-  const SNAP_DISTANCE = 95; // 吸附距離（CSS 像素）
-  const MIC_GAME_THRESHOLD = 96; // 遊戲音量指數門檻，非真實 dB SPL
-  const REQUIRE_SPEECH = false; // 只需要音量感應達標即可通關，不需語音辨識
+  const SNAP_DISTANCE = 95;
+  const MIC_GAME_THRESHOLD = 96;
+  const REQUIRE_SPEECH = false;
 
   const $ = id => document.getElementById(id);
   const timerEl = $("timer"), moneyText = $("moneyText"), billStack = $("billStack");
@@ -295,7 +288,252 @@
   }
   $("startBtn").addEventListener("click",startGame);
 
-  // 按下「繼續挑戰」後，清空錯誤配對並恢復計時
   $("continueGameBtn").addEventListener("click",()=>{
     $("wrongAnswerPopup").classList.add("hidden");
-    ["eyeZone","noseZone","mouthZone"].for
+    ["eyeZone","noseZone","mouthZone"].forEach(id=>{
+      const zone=$(id);
+      zone.querySelector("span").classList.remove("hidden");
+      zone.querySelector(".placed").innerHTML="";
+    });
+    document.querySelectorAll(".piece.used").forEach(el=>{
+      el.classList.remove("used");
+    });
+    placed={eyes:null,nose:null,mouth:null};
+    selected=null;
+    evaluating=false;
+    $("progressFill").style.width="0%";
+    $("hint").textContent="再試一次！三個位置都放好後，才會揭曉結果。";
+    runTimer();
+  });
+
+  function onPieceDown(e) {
+    if(!started || finished) return;
+    const piece=e.currentTarget;
+    piece.setPointerCapture?.(e.pointerId);
+    const clone=piece.cloneNode(true);
+    clone.style.cssText="position:fixed;z-index:80;pointer-events:none;width:86px;opacity:.9;transform:translate(-50%,-50%);";
+    document.body.appendChild(clone);
+    const move=ev=>{clone.style.left=ev.clientX+"px";clone.style.top=ev.clientY+"px";};
+    move(e);
+    const up=ev=>{
+      document.removeEventListener("pointermove",move);
+      document.removeEventListener("pointerup",up);
+      clone.remove();
+      attemptDrop(piece.dataset.type,Number(piece.dataset.number),ev.clientX,ev.clientY);
+    };
+    document.addEventListener("pointermove",move,{passive:true});
+    document.addEventListener("pointerup",up,{once:true});
+  }
+
+  function attemptDrop(type, number, x, y) {
+    if(!started || finished || evaluating) return;
+    const zone=$(type==="eyes"?"eyeZone":type==="nose"?"noseZone":"mouthZone");
+    const r=zone.getBoundingClientRect();
+    const cx=r.left+r.width/2;
+    const cy=r.top+r.height/2;
+    const distance=Math.hypot(x-cx,y-cy);
+    if(distance>SNAP_DISTANCE) {
+      $("hint").textContent="再靠近一點，對準對應位置就會自動吸附！";
+      return;
+    }
+    placeFeature(type,number);
+  }
+
+  function placeFeature(type,number) {
+    if(evaluating) return;
+    const zone=$(type==="eyes"?"eyeZone":type==="nose"?"noseZone":"mouthZone");
+    const previousNumber = placed[type];
+    if(previousNumber === number) return;
+    if(previousNumber !== null) {
+      document.querySelectorAll(
+        `.piece[data-type="${type}"][data-number="${previousNumber}"]`
+      ).forEach(el=>el.classList.remove("used"));
+    }
+    placed[type] = number;
+    selected = null;
+    zone.querySelector("span").classList.add("hidden");
+    zone.querySelector(".placed").innerHTML = svgFor(type,number);
+    document.querySelectorAll(
+      `.piece[data-type="${type}"][data-number="${number}"]`
+    ).forEach(el=>el.classList.add("used"));
+    const count = Object.values(placed).filter(v=>v!==null).length;
+    $("progressFill").style.width = (count/3*100)+"%";
+    if(count===3) {
+      evaluateFace();
+    } else {
+      $("hint").textContent = `已完成 ${count}/3 個位置，繼續尋找新娘的模樣！`;
+    }
+  }
+
+  function evaluateFace() {
+    const allCorrect=Object.keys(CORRECT).every(
+      type=>placed[type]===CORRECT[type]
+    );
+    if(allCorrect) {
+      $("hint").textContent="挑戰成功！你找到新娘的真實模樣了！";
+      setTimeout(
+        ()=>win(elapsed*REWARD_PER_SECOND,"愛的模樣｜五官配對挑戰成功！"),
+        450
+      );
+      return;
+    }
+    evaluating=true;
+    stopTimer();
+    $("wrongAnswerPopup").classList.remove("hidden");
+    $("hint").textContent="請重新配對三個五官。";
+  }
+
+  ["eyeZone","noseZone","mouthZone"].forEach(id=>{
+    $(id).addEventListener("click",()=>{
+      if(!selected || !started || finished) return;
+      const expected=selected.type==="eyes"?"eyeZone":selected.type==="nose"?"noseZone":"mouthZone";
+      if(id===expected) {
+        const zone=$(id).getBoundingClientRect();
+        attemptDrop(selected.type,selected.number,zone.left+zone.width/2,zone.top+zone.height/2);
+      }
+    });
+  });
+
+  function stopTimer(){ if(timerId){clearInterval(timerId);timerId=null;} }
+
+  function enterAdvanced() {
+    if(finished) return;
+    stopTimer(); finished=true;
+    $("mainGame").classList.add("hidden");
+    $("advancedIntro").classList.remove("hidden");
+    $("gameState").textContent="進階挑戰";
+  }
+
+  function win(amount,detail) {
+    if($("resultScreen").classList.contains("hidden")===false) return;
+    finished=true; stopTimer(); stopMic();
+    $("finalAmount").textContent="NT$ "+Number(amount).toLocaleString("zh-TW");
+    $("resultDetail").textContent=detail;
+    $("advancedIntro").classList.add("hidden");
+    $("micScreen").classList.add("hidden");
+    $("resultScreen").classList.remove("hidden");
+  }
+
+  async function startMicChallenge() {
+    const btn = $("micStartBtn");
+    const introCard = btn ? btn.parentElement : null;
+    if (!btn) return;
+
+    btn.disabled = true;
+    btn.textContent = "正在啟動麥克風…";
+    if (introCard) {
+      introCard.querySelectorAll(".mic-err-msg").forEach(el => el.remove());
+    }
+
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error("此環境不支援麥克風（請確認是否為 HTTPS 或 localhost）");
+      }
+
+      micStream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+      });
+
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) {
+        throw new Error("此瀏覽器不支援 AudioContext");
+      }
+
+      if (!audioContext) {
+        audioContext = new AudioCtx();
+      }
+      if (audioContext.state === "suspended") {
+        await audioContext.resume();
+      }
+
+      analyser = audioContext.createAnalyser();
+      analyser.fftSize = 1024;
+      analyser.smoothingTimeConstant = 0.5;
+
+      const source = audioContext.createMediaStreamSource(micStream);
+      source.connect(analyser);
+
+      finished = false;
+      $("advancedIntro").classList.add("hidden");
+      $("micScreen").classList.remove("hidden");
+      $("micStatus").textContent = "麥克風已啟動，請大聲說出：禹庭我愛你！";
+
+      if (rafId) cancelAnimationFrame(rafId);
+      updateMicLevel();
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = "重新取得麥克風權限";
+      if (introCard) {
+        const msg = document.createElement("p");
+        msg.className = "mic-err-msg";
+        msg.style.cssText = "color:#c0392b;font-weight:700;margin-top:10px;";
+        msg.textContent = "啟動失敗：" + (err && err.message ? err.message : String(err));
+        introCard.appendChild(msg);
+      }
+    }
+  }
+  $("micStartBtn").addEventListener("click", startMicChallenge);
+
+  function updateMicLevel() {
+    if (!analyser || finished) return;
+
+    const data = new Uint8Array(analyser.fftSize);
+    analyser.getByteTimeDomainData(data);
+
+    let sumSquares = 0;
+    let peak = 0;
+    for (let i = 0; i < data.length; i++) {
+      const centered = (data[i] - 128) / 128;
+      const absVal = Math.abs(centered);
+      if (absVal > peak) peak = absVal;
+      sumSquares += centered * centered;
+    }
+
+    const rms = Math.sqrt(sumSquares / data.length);
+    const combined = Math.max(rms * 2.5, peak * 1.2);
+    const db = Math.max(0, Math.min(123, Math.round(combined * 123)));
+
+    currentLevel = db;
+    const dbEl = $("dbValue");
+    const fill = $("meterFill");
+    if (dbEl) dbEl.textContent = db;
+    if (fill) fill.style.width = (db / 123 * 100) + "%";
+
+    if (dbEl && fill) {
+      let color = "#666";
+      if (db >= 100) color = "#e74c3c";
+      else if (db >= 80) color = "#f39c12";
+      else if (db >= 40) color = "#2ecc71";
+      dbEl.style.color = color;
+      fill.style.background = color;
+    }
+
+    if (db >= MIC_GAME_THRESHOLD) {
+      maybeMicWin();
+    }
+
+    rafId = requestAnimationFrame(updateMicLevel);
+  }
+
+  function maybeMicWin() {
+    if(currentLevel>=MIC_GAME_THRESHOLD && !REQUIRE_SPEECH) {
+      $("dbValue").style.color="#ff1717"; $("dbValue").style.transform="scale(1.18)";
+      $("micStatus").textContent="告白成功！新郎太有誠意了！";
+      win(ADVANCED_REWARD,"進階告白挑戰成功！");
+    }
+  }
+
+  function stopMic() {
+    if(rafId) cancelAnimationFrame(rafId);
+    if(micStream) micStream.getTracks().forEach(t=>t.stop());
+    if(audioContext){try{audioContext.close();}catch(e){}}
+  }
+
+  $("debugWin").addEventListener("click",()=>win(ADVANCED_REWARD,"進階挑戰（現場測試通關）"));
+
+  function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+  renderMoney();
+})();
+</script>
+</body>
+</html>
