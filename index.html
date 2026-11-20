@@ -221,7 +221,12 @@
   const REWARD_PER_SECOND = 100;
   const ADVANCED_REWARD = 8800;
   const SNAP_DISTANCE = 95;
-  const MIC_GAME_THRESHOLD = 96;
+  // ===== 進階挑戰（麥克風）參數：想調整就改這裡 =====
+  const MIC_GAME_THRESHOLD = 96;   // 音量下限：達到此數值才算「達標」
+  const MIC_HOLD_MS = 3000;        // 需連續維持達標多久（毫秒），3000 = 3 秒
+  const MIC_GRACE_MS = 300;        // 容錯：短暫掉到下限以下不超過此時間，不會重新計時（設 0 則完全嚴格）
+  const DB_DISPLAY_INTERVAL = 250; // 畫面數字更新間隔（毫秒），越大跳動越慢；手機建議 200~400
+  // ================================================
   const REQUIRE_SPEECH = false;
 
   const $ = id => document.getElementById(id);
@@ -230,6 +235,8 @@
   let placed = { eyes:null, nose:null, mouth:null }, selected = null, evaluating = false;
   let audioContext = null, analyser = null, micStream = null, rafId = null;
   let currentLevel = 0;
+  let holdStart = null, lastAboveTime = 0;
+  let lastDisplayTime = 0, displaySum = 0, displayCount = 0;
 
   function svgFor(type, n) {
     return `<img src="images/${type}${n}.png" alt="${type} ${n}" style="width:100%; height:100%; object-fit:contain; pointer-events:none;" />`;
@@ -454,6 +461,7 @@
       source.connect(analyser);
 
       finished = false;
+      holdStart = null; lastAboveTime = 0; lastDisplayTime = 0; displaySum = 0; displayCount = 0;
       $("advancedIntro").classList.add("hidden");
       $("micScreen").classList.remove("hidden");
       $("micStatus").textContent = "麥克風已啟動，請大聲說出：禹庭我愛你！";
@@ -494,29 +502,47 @@
     const db = Math.max(0, Math.min(123, Math.round(combined * 123)));
 
     currentLevel = db;
-    const dbEl = $("dbValue");
-    const fill = $("meterFill");
-    if (dbEl) dbEl.textContent = db;
-    if (fill) fill.style.width = (db / 123 * 100) + "%";
+    const now = performance.now();
 
-    if (dbEl && fill) {
-      let color = "#666";
-      if (db >= 100) color = "#e74c3c";
-      else if (db >= 80) color = "#f39c12";
-      else if (db >= 40) color = "#2ecc71";
-      dbEl.style.color = color;
-      fill.style.background = color;
+    // 畫面顯示：累積一段時間取平均再更新，避免數字閃太快
+    displaySum += db; displayCount++;
+    if (now - lastDisplayTime >= DB_DISPLAY_INTERVAL) {
+      const shown = Math.round(displaySum / displayCount);
+      displaySum = 0; displayCount = 0; lastDisplayTime = now;
+      const dbEl = $("dbValue");
+      const fill = $("meterFill");
+      if (dbEl) dbEl.textContent = shown;
+      if (fill) fill.style.width = (shown / 123 * 100) + "%";
+      if (dbEl && fill) {
+        let color = "#666";
+        if (shown >= 100) color = "#e74c3c";
+        else if (shown >= 80) color = "#f39c12";
+        else if (shown >= 40) color = "#2ecc71";
+        dbEl.style.color = color;
+        fill.style.background = color;
+      }
     }
 
+    // 判定：需連續維持達標 MIC_HOLD_MS 才算成功
     if (db >= MIC_GAME_THRESHOLD) {
-      maybeMicWin();
+      lastAboveTime = now;
+      if (holdStart === null) holdStart = now;
+      const held = now - holdStart;
+      if (held >= MIC_HOLD_MS) {
+        maybeMicWin();
+        return;
+      }
+      $("micStatus").textContent = `很好！請繼續維持… ${(held/1000).toFixed(1)} / ${(MIC_HOLD_MS/1000).toFixed(0)} 秒`;
+    } else if (holdStart !== null && now - lastAboveTime > MIC_GRACE_MS) {
+      holdStart = null;
+      $("micStatus").textContent = "音量掉下來了，重新大聲喊！請大聲說出：禹庭我愛你！";
     }
 
     rafId = requestAnimationFrame(updateMicLevel);
   }
 
   function maybeMicWin() {
-    if(currentLevel>=MIC_GAME_THRESHOLD && !REQUIRE_SPEECH) {
+    if(!REQUIRE_SPEECH) {
       $("dbValue").style.color="#ff1717"; $("dbValue").style.transform="scale(1.18)";
       $("micStatus").textContent="告白成功！新郎太有誠意了！";
       win(ADVANCED_REWARD,"進階告白挑戰成功！");
