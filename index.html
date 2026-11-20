@@ -183,7 +183,7 @@
   <div class="advanced-card">
     <div style="font-size:48px">📣💗</div>
     <h2>進階挑戰！</h2>
-    <p>哦喔！無法完成五官配對挑戰？請用最大聲的音量向美麗的新娘告白吧！<br><b>（請對著裝置大聲說出「禹庭我愛你！」讓音量指數達標！）</b></p>
+    <p>哦喔！無法完成五官配對挑戰？請用最大聲的音量向美麗的新娘告白吧！<br><b>（請對著裝置大聲說出「老婆我愛你！」讓音量指數達標(100)超過三秒！）</b></p>
     <button class="btn gold" id="micStartBtn">進階挑戰開始</button>
     <p style="font-size:12px;color:#927f7c">請在 HTTPS 或 localhost 網頁環境中使用，並允許麥克風權限。</p>
   </div>
@@ -191,12 +191,12 @@
 
 <section class="screen mic-screen hidden" id="micScreen">
   <div>
-    <div style="font-size:18px;color:#aaa">新郎深情告白挑戰</div>
-    <div class="love">禹庭我愛你！</div>
+    <div style="font-size:18px;color:#aaa">深情告白挑戰</div>
+    <div class="love">📣老婆我愛你！</div>
     <div class="db" id="dbValue">0</div>
-    <div style="font-size:18px;color:#aaa">遊戲音量指數</div>
+    <div style="font-size:18px;color:#aaa">音量指數</div>
     <div class="meter"><div class="meter-fill" id="meterFill"></div></div>
-    <div class="mic-note" id="micStatus">請大聲說出：禹庭我愛你！</div>
+    <div class="mic-note" id="micStatus">請大聲說出：老婆我愛你！</div>
   </div>
   <button class="debug" id="debugWin" aria-label="測試一鍵通關">測試通關</button>
 </section>
@@ -204,11 +204,11 @@
 <section class="result hidden" id="resultScreen">
   <div class="result-panel">
     <div class="confetti">🎉 💐 🎊</div>
-    <h2>恭喜你挑戰成功！<br>快進門找你的老婆吧～</h2>
-    <div style="font-size:19px">本次紅包金額</div>
+    <h2>恭喜你挑戰成功！<br>快進門找你最愛的老婆吧～</h2>
+    <div style="font-size:19px">獻給老婆的紅包金額</div>
     <div class="amount" id="finalAmount">NT$ 0</div>
     <div id="resultDetail">新郎闖關成功！</div>
-    <p style="font-size:14px">❤️ 禹庭我愛你！ ❤️</p>
+    <p style="font-size:14px">❤️ 老婆最愛你 ❤️</p>
   </div>
 </section>
 
@@ -464,7 +464,7 @@
       holdStart = null; lastAboveTime = 0; lastDisplayTime = 0; displaySum = 0; displayCount = 0;
       $("advancedIntro").classList.add("hidden");
       $("micScreen").classList.remove("hidden");
-      $("micStatus").textContent = "麥克風已啟動，請大聲說出：禹庭我愛你！";
+      $("micStatus").textContent = "麥克風已啟動，請大聲說出：老婆我愛你！";
 
       if (rafId) cancelAnimationFrame(rafId);
       updateMicLevel();
@@ -535,7 +535,7 @@
       $("micStatus").textContent = `很好！請繼續維持… ${(held/1000).toFixed(1)} / ${(MIC_HOLD_MS/1000).toFixed(0)} 秒`;
     } else if (holdStart !== null && now - lastAboveTime > MIC_GRACE_MS) {
       holdStart = null;
-      $("micStatus").textContent = "音量掉下來了，重新大聲喊！請大聲說出：禹庭我愛你！";
+      $("micStatus").textContent = "音量掉下來了，重新大聲喊！請大聲說出：老婆我愛你！";
     }
 
     rafId = requestAnimationFrame(updateMicLevel);
