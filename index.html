@@ -227,6 +227,18 @@
   const MIC_GRACE_MS = 300;        // 容錯：短暫掉到下限以下不超過此時間，不會重新計時（設 0 則完全嚴格）
   const DB_DISPLAY_INTERVAL = 250; // 畫面數字更新間隔（毫秒），越大跳動越慢；手機建議 200~400
   // ================================================
+  // ===== 第一階段背景音樂參數 =====
+  const BGM_SRC = "audio/tense.mp3"; // 音樂檔路徑
+  const BGM_VOLUME = 0.6;            // 音量 0~1
+  const BGM_SPEEDUP_SECONDS = 20;    // 倒數最後幾秒開始加速（設 0 則不加速）
+  const BGM_MAX_RATE = 1.25;         // 時間到時的最高速度（1.25 = 快 25%）
+  // ================================
+
+
+
+
+
+  
   const REQUIRE_SPEECH = false;
 
   const $ = id => document.getElementById(id);
@@ -273,10 +285,31 @@
     }
     $("progressFill").style.width = (Object.values(placed).filter(Boolean).length/3*100)+"%";
   }
+  const bgm = new Audio(BGM_SRC);
+  bgm.loop = true;
+  bgm.volume = BGM_VOLUME;
+  bgm.preload = "auto";
+  function playBgm() { bgm.playbackRate = 1; bgm.currentTime = 0; bgm.play().catch(e => console.warn("背景音樂無法播放：", e)); }
+  // 倒數最後階段，速度由 1 倍逐漸加快到 BGM_MAX_RATE
+  function updateBgmSpeed() {
+    if (!BGM_SPEEDUP_SECONDS) return;
+    const remaining = MAX_SECONDS - elapsed;
+    if (remaining <= BGM_SPEEDUP_SECONDS) {
+      const progress = Math.min(1, (BGM_SPEEDUP_SECONDS - remaining) / BGM_SPEEDUP_SECONDS);
+      bgm.playbackRate = 1 + (BGM_MAX_RATE - 1) * progress;
+    }
+  }
+  function stopBgm() {
+    const fade = setInterval(() => {
+      if (bgm.volume > 0.05) bgm.volume = Math.max(0, bgm.volume - BGM_VOLUME / 6);
+      else { clearInterval(fade); bgm.pause(); bgm.volume = BGM_VOLUME; }
+    }, 100);
+  }
 
   function startGame() {
     if(started) return;
     started=true;
+    playBgm();
     $("preGame").classList.add("hidden");
     $("challengeArea").classList.remove("hidden");
     $("gameState").textContent="挑戰進行中！";
@@ -405,7 +438,7 @@
 
   function enterAdvanced() {
     if(finished) return;
-    stopTimer(); finished=true;
+    stopTimer(); finished=true; stopBgm();;
     $("mainGame").classList.add("hidden");
     $("advancedIntro").classList.remove("hidden");
     $("gameState").textContent="進階挑戰";
@@ -413,7 +446,7 @@
 
   function win(amount,detail) {
     if($("resultScreen").classList.contains("hidden")===false) return;
-    finished=true; stopTimer(); stopMic();
+    finished=true; stopTimer(); stopMic(); stopBgm();
     $("finalAmount").textContent="NT$ "+Number(amount).toLocaleString("zh-TW");
     $("resultDetail").textContent=detail;
     $("advancedIntro").classList.add("hidden");
